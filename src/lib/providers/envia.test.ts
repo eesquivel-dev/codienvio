@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { errorToResponse, ProviderError } from "@/lib/errors";
 import {
+  ENVIA_INSUFFICIENT_BALANCE_MESSAGE,
   ENVIA_MOCK_ZIPS,
   ENVIA_MX_CARRIERS,
   EnviaProvider,
   buildEnviaLabelPayload,
   buildEnviaRatePayload,
   buildEnviaRatePayloads,
+  formatEnviaError,
   mergeEnviaRateLists,
   parseEnviaGeocode,
   parseEnviaLabel,
@@ -153,6 +156,46 @@ describe("Envia parsers", () => {
     ).toThrow(/Invalid zipcode/);
   });
 
+  it("mapea generate 1170 / Not Enough money a saldo insuficiente", () => {
+    const payload = {
+      meta: "error",
+      error: { code: 1170, description: "Invalid Option", message: "Not Enough money" },
+    };
+    expect(() => parseEnviaLabel(payload)).toThrow(ENVIA_INSUFFICIENT_BALANCE_MESSAGE);
+
+    try {
+      parseEnviaLabel(payload);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ProviderError);
+      const { body } = errorToResponse(error);
+      expect(body.error.message).toBe(ENVIA_INSUFFICIENT_BALANCE_MESSAGE);
+      expect(body.error.message).not.toMatch(/Invalid Option/i);
+      expect(body.error.details).toMatchObject({
+        code: 1170,
+        message: "Not Enough money",
+        description: "Invalid Option",
+      });
+    }
+  });
+
+  it("prefiere error.message sobre description vaga en generate", () => {
+    expect(() =>
+      parseEnviaLabel({
+        meta: "error",
+        error: { code: 42, description: "Invalid Option", message: "Service not available" },
+      }),
+    ).toThrow(/Envia no pudo generar la guía: Service not available/);
+  });
+
+  it("no muestra Invalid Option si solo viene description vaga", () => {
+    expect(() =>
+      parseEnviaLabel({
+        meta: "error",
+        error: { description: "Invalid Option" },
+      }),
+    ).toThrow("Envia no pudo generar la guía");
+  });
+
   it("parsea guía con PDF y rastreo", () => {
     const label = parseEnviaLabel({
       meta: "generate",
@@ -170,6 +213,23 @@ describe("Envia parsers", () => {
     expect(label.trackingNumber).toBe("EST123");
     expect(label.labelUrl).toContain(".pdf");
     expect(label.providerCost).toBe(125.5);
+  });
+});
+
+describe("formatEnviaError", () => {
+  it("mapea código 1170 aunque el mensaje venga vacío", () => {
+    expect(
+      formatEnviaError({ error: { code: "1170", description: "Invalid Option" } }, "fallback"),
+    ).toBe(ENVIA_INSUFFICIENT_BALANCE_MESSAGE);
+  });
+
+  it("prefiere message sobre description", () => {
+    expect(
+      formatEnviaError(
+        { error: { description: "Invalid Option", message: "Carrier timeout" } },
+        "Envia no pudo generar la guía",
+      ),
+    ).toBe("Envia no pudo generar la guía: Carrier timeout");
   });
 });
 
@@ -277,6 +337,31 @@ describe("EnviaProvider.quoteRates", () => {
     );
 
     await expect(liveProvider().quoteRates(sample)).rejects.toThrow(/no devolvió tarifas/);
+  });
+});
+
+describe("EnviaProvider.generateLabel", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("expone saldo insuficiente cuando Envía responde 1170", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            meta: "error",
+            error: { code: 1170, description: "Invalid Option", message: "Not Enough money" },
+          }),
+      })),
+    );
+
+    await expect(
+      liveProvider().generateLabel({ ...sample, carrier: "estafeta", service: "express" }),
+    ).rejects.toThrow(ENVIA_INSUFFICIENT_BALANCE_MESSAGE);
   });
 });
 
