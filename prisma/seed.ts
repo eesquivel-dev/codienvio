@@ -9,37 +9,52 @@ const prisma = new PrismaClient();
 
 const DEMO_API_KEY = "ce_test_demo_cliente_key_do_not_use_in_prod";
 
+/** Only these two known demo emails are reset on every seed. */
+const DEMO_ADMIN_EMAIL = "admin@codienvio.mx";
+const DEMO_ADMIN_PASSWORD = "Admin1234!";
+const DEMO_CLIENT_EMAIL = "cliente@demo.mx";
+const DEMO_CLIENT_PASSWORD = "Cliente1234!";
+
+const DEFAULT_FEE_PERCENT = 20;
+const DEFAULT_FEE_FIXED_MXN = 0;
+
 async function main() {
   await prisma.settings.upsert({
     where: { id: "default" },
-    update: {},
+    update: {
+      defaultFeePercent: DEFAULT_FEE_PERCENT,
+      defaultFeeFixedMxn: DEFAULT_FEE_FIXED_MXN,
+    },
     create: {
       id: "default",
       enviaEnvironment: "sandbox",
-      defaultFeePercent: 15,
-      defaultFeeFixedMxn: 10,
+      defaultFeePercent: DEFAULT_FEE_PERCENT,
+      defaultFeeFixedMxn: DEFAULT_FEE_FIXED_MXN,
       mockMode: process.env.ENVIA_MOCK === "true" || !process.env.ENVIA_TOKEN,
     },
   });
 
+  const adminPasswordHash = await hash(DEMO_ADMIN_PASSWORD, 12);
+  const clientPasswordHash = await hash(DEMO_CLIENT_PASSWORD, 12);
+
   const admin = await prisma.user.upsert({
-    where: { email: "admin@codienvio.mx" },
-    update: {},
+    where: { email: DEMO_ADMIN_EMAIL },
+    update: { passwordHash: adminPasswordHash },
     create: {
-      email: "admin@codienvio.mx",
+      email: DEMO_ADMIN_EMAIL,
       name: "Edgar Admin",
-      passwordHash: await hash("Admin1234!", 12),
+      passwordHash: adminPasswordHash,
       role: "ADMIN",
     },
   });
 
   const clientUser = await prisma.user.upsert({
-    where: { email: "cliente@demo.mx" },
-    update: {},
+    where: { email: DEMO_CLIENT_EMAIL },
+    update: { passwordHash: clientPasswordHash },
     create: {
-      email: "cliente@demo.mx",
+      email: DEMO_CLIENT_EMAIL,
       name: "Cliente Demo",
-      passwordHash: await hash("Cliente1234!", 12),
+      passwordHash: clientPasswordHash,
       role: "CLIENT",
       client: {
         create: {
@@ -69,8 +84,8 @@ async function main() {
   });
 
   console.log("Seed listo.");
-  console.log("Admin:   admin@codienvio.mx / Admin1234!");
-  console.log("Cliente: cliente@demo.mx / Cliente1234!");
+  console.log(`Admin:   ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`Cliente: ${DEMO_CLIENT_EMAIL} / ${DEMO_CLIENT_PASSWORD}`);
   console.log(`API key: ${DEMO_API_KEY}`);
   console.log(`Admin id: ${admin.id}`);
 }
