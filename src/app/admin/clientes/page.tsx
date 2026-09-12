@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { formatMxn } from "@/lib/money";
+import { asMoney, formatMxn } from "@/lib/money";
 import { ClientsManager } from "@/app/admin/clientes/clients-manager";
 import { PageHeader } from "@/components/page-header";
 
@@ -11,6 +11,7 @@ export default async function ClientsPage() {
     include: {
       user: true,
       apiKeys: { orderBy: { createdAt: "desc" } },
+      walletTxns: { orderBy: { createdAt: "desc" }, take: 8 },
     },
   });
 
@@ -18,7 +19,7 @@ export default async function ClientsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Clientes y API keys"
-        description="Crea cuentas de portal y genera API keys. La key completa solo se muestra una vez; después solo verás el prefijo."
+        description="Crea cuentas, carga saldo prepagado y genera API keys. La key completa solo se muestra una vez; después solo verás el prefijo."
       />
       <ClientsManager
         clients={clients.map((client) => ({
@@ -29,7 +30,16 @@ export default async function ClientsPage() {
           active: client.active,
           feePercent: client.feePercent === null ? null : Number(client.feePercent),
           feeFixedMxn: client.feeFixedMxn === null ? null : Number(client.feeFixedMxn),
-          balanceLabel: formatMxn(Number(client.balanceMxn)),
+          balanceMxn: asMoney(client.balanceMxn),
+          balanceLabel: formatMxn(asMoney(client.balanceMxn)),
+          ledger: client.walletTxns.map((row) => ({
+            id: row.id,
+            type: row.type,
+            amountMxn: asMoney(row.amountMxn),
+            note: row.note,
+            shipmentId: row.shipmentId,
+            createdAt: row.createdAt.toISOString(),
+          })),
           keys: client.apiKeys.map((key) => ({
             id: key.id,
             name: key.name,

@@ -23,15 +23,22 @@ enum ShipmentStatus {
   FAILED
 }
 
+enum WalletTxnType {
+  TOP_UP
+  PURCHASE
+  ADJUSTMENT
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         Role
-  client       Client?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  name               String
+  role               Role
+  client             Client?
+  walletAdjustments  WalletTransaction[] @relation("WalletCreatedBy")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model Client {
@@ -47,6 +54,7 @@ model Client {
   quotes      Quote[]
   shipments   Shipment[]
   sales       Sale[]
+  walletTxns  WalletTransaction[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -129,6 +137,7 @@ model Shipment {
   packages             Json
   errorMessage         String?
   sale                 Sale?
+  walletTxn            WalletTransaction?
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 }
@@ -144,4 +153,21 @@ model Sale {
   clientPrice  Decimal  @db.Decimal(12, 2)
   currency     String   @default("MXN")
   createdAt    DateTime @default(now())
+}
+
+/// Prepaid MXN ledger. amountMxn is signed: + top-up / − purchase or debit.
+model WalletTransaction {
+  id              String        @id @default(cuid())
+  clientId        String
+  client          Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amountMxn       Decimal       @db.Decimal(12, 2)
+  type            WalletTxnType
+  shipmentId      String?       @unique
+  shipment        Shipment?     @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+  note            String?
+  createdByUserId String?
+  createdBy       User?         @relation("WalletCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+
+  @@index([clientId, createdAt])
 }

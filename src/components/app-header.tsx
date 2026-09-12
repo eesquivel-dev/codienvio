@@ -20,10 +20,12 @@ export function AppHeader({
   name,
   role,
   items,
+  balanceLabel,
 }: {
   name?: string | null;
   role: "ADMIN" | "CLIENT";
   items: NavItem[];
+  balanceLabel?: string;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -53,6 +55,11 @@ export function AppHeader({
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          {balanceLabel ? (
+            <span className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy">
+              Saldo {balanceLabel}
+            </span>
+          ) : null}
           <span className="hidden max-w-[14rem] truncate text-[0.8125rem] font-medium tracking-[-0.011em] text-white/65 sm:inline">
             {name} · {role === "ADMIN" ? "Admin" : "Cliente"}
           </span>

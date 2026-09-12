@@ -8,7 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { getActiveProvider, getSettingsRow, resolveEnviaToken, saveSettings } from "@/lib/settings";
 import { getAdminDashboardStats } from "@/lib/services/shipping";
-import { createClientSchema, settingsSchema } from "@/lib/validations";
+import { adjustClientWallet } from "@/lib/wallet";
+import { adjustBalanceSchema, createClientSchema, settingsSchema } from "@/lib/validations";
 
 function actionError(error: unknown) {
   const { body } = errorToResponse(error);
@@ -148,6 +149,34 @@ export async function toggleClientAction(clientId: string, active: boolean) {
     await prisma.client.update({ where: { id: clientId }, data: { active } });
     revalidatePath("/admin/clientes");
     return { ok: true as const };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function adjustClientBalanceAction(formData: FormData) {
+  try {
+    const session = await requireAdmin();
+    const parsed = adjustBalanceSchema.parse({
+      clientId: formData.get("clientId"),
+      amountMxn: formData.get("amountMxn"),
+      direction: formData.get("direction"),
+      note: formData.get("note"),
+    });
+    const client = await prisma.client.findUnique({ where: { id: parsed.clientId } });
+    if (!client) throw new AppError("Cliente no encontrado", 404);
+
+    const result = await adjustClientWallet({
+      clientId: parsed.clientId,
+      amountMxn: parsed.amountMxn,
+      direction: parsed.direction,
+      note: parsed.note,
+      createdByUserId: session.user.id,
+    });
+
+    revalidatePath("/admin/clientes");
+    revalidatePath("/portal");
+    return { ok: true as const, balanceMxn: result.balanceMxn };
   } catch (error) {
     return actionError(error);
   }

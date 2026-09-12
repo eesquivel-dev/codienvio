@@ -55,6 +55,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Shipment"
+        "402":
+          description: Saldo prepagado insuficiente. No se llama a Envía.
   /v1/shipments/{id}:
     get:
       summary: Consultar envío

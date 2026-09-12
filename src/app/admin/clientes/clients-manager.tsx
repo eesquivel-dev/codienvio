@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  adjustClientBalanceAction,
   createApiKeyAction,
   createClientAction,
   revokeApiKeyAction,
@@ -12,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { formatDateTimeMx } from "@/lib/format";
+import { formatMxn } from "@/lib/money";
+import { walletTxnTypeLabel, type WalletLedgerRow } from "@/lib/wallet-copy";
 
 type ClientRow = {
   id: string;
@@ -21,7 +25,9 @@ type ClientRow = {
   active: boolean;
   feePercent: number | null;
   feeFixedMxn: number | null;
+  balanceMxn: number;
   balanceLabel: string;
+  ledger: WalletLedgerRow[];
   keys: Array<{ id: string; name: string; prefix: string; revoked: boolean }>;
 };
 
@@ -53,7 +59,7 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
           <CardTitle>Nuevo cliente</CardTitle>
           <CardDescription>
             Deja las comisiones vacías para usar la regla global (por defecto 20% del costo Envia,
-            $0 fijo). El saldo es un stub (sin cobros).
+            $0 fijo). El saldo prepagado empieza en $0; cárgalo abajo después de crear la cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -157,9 +163,8 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
                 {client.feePercent === null && client.feeFixedMxn === null
                   ? "regla global"
                   : `${client.feePercent ?? "global"}% + ${client.feeFixedMxn ?? "global"} MXN`}
-                {" · "}
-                Saldo stub: {client.balanceLabel}
               </p>
+              <WalletPanel client={client} onError={setError} />
               <div className="space-y-2 rounded-lg bg-muted/50 p-3">
                 <p className="type-overline text-muted-foreground">API keys</p>
                 {client.keys.length === 0 ? (
@@ -194,6 +199,118 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
             </CardContent>
           </Card>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function WalletPanel({
+  client,
+  onError,
+}: {
+  client: ClientRow;
+  onError: (message: string | null) => void;
+}) {
+  const [busy, setBusy] = useState<"credit" | "debit" | null>(null);
+
+  async function onAdjust(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const direction = submitter?.value === "debit" ? "debit" : "credit";
+    const formData = new FormData(form);
+    formData.set("clientId", client.id);
+    formData.set("direction", direction);
+    setBusy(direction);
+    onError(null);
+    try {
+      const result = await adjustClientBalanceAction(formData);
+      if (!result.ok) onError(result.error);
+      else form.reset();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-navy/10 bg-papel p-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="type-overline text-muted-foreground">Saldo prepagado</p>
+          <p className="text-xl font-bold tabular-nums tracking-[-0.03em] text-navy">
+            {client.balanceLabel}
+          </p>
+        </div>
+        <Badge variant={client.balanceMxn > 0 ? "success" : "outline"}>MXN</Badge>
+      </div>
+      <form onSubmit={onAdjust} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <Field label="Monto MXN" htmlFor={`amount-${client.id}`}>
+          <Input
+            id={`amount-${client.id}`}
+            name="amountMxn"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0.01"
+            placeholder="500.00"
+            required
+          />
+        </Field>
+        <Field label="Motivo" htmlFor={`note-${client.id}`} hint="Obligatorio en carga y ajuste">
+          <Input
+            id={`note-${client.id}`}
+            name="note"
+            maxLength={200}
+            placeholder="Transferencia, cortesía…"
+            required
+            minLength={2}
+          />
+        </Field>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" name="direction" value="credit" size="sm" disabled={busy !== null}>
+            {busy === "credit" ? "Cargando…" : "Cargar saldo"}
+          </Button>
+          <Button
+            type="submit"
+            name="direction"
+            value="debit"
+            size="sm"
+            variant="outline"
+            disabled={busy !== null}
+          >
+            {busy === "debit" ? "Ajustando…" : "Ajuste (−)"}
+          </Button>
+        </div>
+      </form>
+      <div>
+        <p className="type-overline mb-2 text-muted-foreground">Movimientos recientes</p>
+        {client.ledger.length === 0 ? (
+          <p className="text-muted-foreground">Aún no hay movimientos.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {client.ledger.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  {walletTxnTypeLabel(row.type)}
+                  {row.note ? ` · ${row.note}` : ""}
+                  <span className="block text-xs text-muted-foreground">
+                    {formatDateTimeMx(row.createdAt)}
+                  </span>
+                </span>
+                <span
+                  className={
+                    row.amountMxn >= 0
+                      ? "font-semibold tabular-nums text-navy"
+                      : "font-semibold tabular-nums text-destructive"
+                  }
+                >
+                  {row.amountMxn >= 0 ? "+" : ""}
+                  {formatMxn(row.amountMxn)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

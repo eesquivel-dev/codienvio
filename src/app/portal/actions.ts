@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireClient } from "@/lib/auth";
 import { errorToResponse } from "@/lib/errors";
 import { createQuote, purchaseFromQuote } from "@/lib/services/shipping";
 import { quoteRequestSchema } from "@/lib/validations";
+import { getClientWallet } from "@/lib/wallet";
 
 export async function quoteAction(input: unknown) {
   try {
@@ -21,7 +23,10 @@ export async function buyAction(quoteId: string, rateId: string) {
   try {
     const session = await requireClient();
     const shipment = await purchaseFromQuote(session.user.clientId!, quoteId, rateId);
-    return { ok: true as const, shipment };
+    const wallet = await getClientWallet(session.user.clientId!);
+    revalidatePath("/portal");
+    revalidatePath("/admin/clientes");
+    return { ok: true as const, shipment, balanceMxn: wallet.balanceMxn };
   } catch (error) {
     const { body } = errorToResponse(error);
     return { ok: false as const, error: body.error.message };

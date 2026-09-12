@@ -6,6 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { getActiveProvider, getDefaultFeeRule } from "@/lib/settings";
 import type { AddressInput, QuoteRequestInput } from "@/lib/validations";
 import { quoteRequestSchema } from "@/lib/validations";
+import {
+  assertSufficientBalance,
+  recordPurchaseCharge,
+  releaseClientFunds,
+  reserveClientFunds,
+} from "@/lib/wallet";
 
 const QUOTE_TTL_MS = 30 * 60 * 1000;
 
@@ -197,8 +203,15 @@ export async function purchaseFromQuote(clientId: string, quoteId: string, rateI
   const provider = await getActiveProvider();
   const defaults = await getDefaultFeeRule();
   const fee = feeForClient(defaults, client);
+  const chargeMxn = asMoney(rate.clientPrice);
 
+  assertSufficientBalance(asMoney(client.balanceMxn), chargeMxn);
+
+  let reservedMxn: number | null = null;
   try {
+    await reserveClientFunds(prisma, clientId, chargeMxn);
+    reservedMxn = chargeMxn;
+
     const label = await provider.generateLabel({
       ...request,
       carrier: rate.carrier,
@@ -244,6 +257,13 @@ export async function purchaseFromQuote(clientId: string, quoteId: string, rateI
         },
       });
 
+      await recordPurchaseCharge(tx, {
+        clientId,
+        amountMxn: chargeMxn,
+        shipmentId: created.id,
+        note: `Guía ${label.trackingNumber || created.id}`,
+      });
+
       await tx.quote.update({
         where: { id: quote.id },
         data: { status: "CONVERTED" },
@@ -252,8 +272,16 @@ export async function purchaseFromQuote(clientId: string, quoteId: string, rateI
       return created;
     });
 
+    reservedMxn = null;
     return toPublicShipment(shipment);
   } catch (error) {
+    if (reservedMxn != null) {
+      await releaseClientFunds(prisma, clientId, reservedMxn);
+      reservedMxn = null;
+    }
+    if (error instanceof AppError && error.code === "INSUFFICIENT_BALANCE") {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : "No se pudo comprar la guía";
     await prisma.shipment.create({
       data: {
