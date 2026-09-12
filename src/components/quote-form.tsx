@@ -477,7 +477,7 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
                     ? `${carrierLabel(selectedRate.carrier)} · ${selectedRate.serviceName} · ${formatMxn(selectedRate.price)}`
                     : "Elige una tarifa"}
                 </p>
-                {selectedRate && !selectedAffordable ? (
+                {boughtId ? null : selectedRate && !selectedAffordable ? (
                   <p className="mt-1 text-sm text-destructive">
                     {insufficientBalanceMessage(balanceMxn, selectedRate.price)}
                   </p>
