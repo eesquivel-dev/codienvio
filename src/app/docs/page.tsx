@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { BrandLockup } from "@/components/brand";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DocsPage() {
   return (
     <main className="mx-auto max-w-3xl space-y-8 px-4 py-12">
       <div>
-        <Link href="/" className="text-sm text-muted-foreground hover:underline">
-          ← CodiEnvio
+        <Link href="/" className="inline-block">
+          <BrandLockup subtitle="Documentación API" />
         </Link>
         <h1 className="mt-2 text-3xl font-semibold">API pública v1</h1>
         <p className="mt-2 text-muted-foreground">
