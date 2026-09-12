@@ -36,6 +36,59 @@ export const ENVIA_MX_CARRIERS = [
 
 export type EnviaMxCarrier = (typeof ENVIA_MX_CARRIERS)[number];
 
+export type EnviaApiError = {
+  message?: string;
+  description?: string;
+  code?: string | number;
+};
+
+export const ENVIA_INSUFFICIENT_BALANCE_MESSAGE =
+  "Saldo insuficiente en la cuenta de Envía. Recarga el monedero para comprar guías.";
+
+const VAGUE_ENVIA_ERROR_TEXT = new Set([
+  "invalid option",
+  "error",
+  "invalid",
+  "unknown",
+  "unknown error",
+]);
+
+function enviaErrorCode(code: string | number | undefined): string {
+  return code == null ? "" : String(code).trim();
+}
+
+function looksLikeInsufficientBalance(error?: EnviaApiError, extra?: string): boolean {
+  if (enviaErrorCode(error?.code) === "1170") return true;
+  const haystack = [error?.message, error?.description, extra]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join(" ")
+    .toLowerCase();
+  return /not enough money|insufficient (?:funds|balance|money)|saldo insuficiente/.test(haystack);
+}
+
+function pickEnviaRawMessage(error?: EnviaApiError, fallbackMessage?: string): string | undefined {
+  for (const candidate of [error?.message, error?.description, fallbackMessage]) {
+    const text = candidate?.trim();
+    if (!text) continue;
+    if (VAGUE_ENVIA_ERROR_TEXT.has(text.toLowerCase())) continue;
+    return text;
+  }
+  return undefined;
+}
+
+/** User-facing Spanish copy from Envía `{ meta: "error" }` payloads. */
+export function formatEnviaError(
+  body: { error?: EnviaApiError; message?: string },
+  fallback: string,
+): string {
+  if (looksLikeInsufficientBalance(body.error, body.message)) {
+    return ENVIA_INSUFFICIENT_BALANCE_MESSAGE;
+  }
+  const raw = pickEnviaRawMessage(body.error, body.message);
+  if (!raw || raw === fallback) return fallback;
+  return `${fallback}: ${raw}`;
+}
+
 function digits(phone: string): string {
   return phone.replace(/\D/g, "").slice(-10);
 }
@@ -314,17 +367,12 @@ export function parseEnviaRates(payload: unknown): ProviderRate[] {
   const body = payload as {
     meta?: string;
     data?: unknown;
-    error?: { message?: string; description?: string; code?: string };
+    error?: EnviaApiError;
     message?: string;
   };
 
   if (body?.error || body?.meta === "error") {
-    const message =
-      body.error?.description ||
-      body.error?.message ||
-      body.message ||
-      "Envia no pudo cotizar este envío";
-    throw new ProviderError(message, body.error);
+    throw new ProviderError(formatEnviaError(body, "Envia no pudo cotizar este envío"), body.error);
   }
 
   const rows = Array.isArray(body?.data) ? body.data : [];
@@ -360,17 +408,12 @@ export function parseEnviaLabel(payload: unknown): ProviderLabel {
   const body = payload as {
     meta?: string;
     data?: unknown;
-    error?: { message?: string; description?: string };
+    error?: EnviaApiError;
     message?: string;
   };
 
   if (body?.error || body?.meta === "error") {
-    const message =
-      body.error?.description ||
-      body.error?.message ||
-      body.message ||
-      "Envia no pudo generar la guía";
-    throw new ProviderError(message, body.error);
+    throw new ProviderError(formatEnviaError(body, "Envia no pudo generar la guía"), body.error);
   }
 
   const first = Array.isArray(body?.data) ? body.data[0] : body?.data;
