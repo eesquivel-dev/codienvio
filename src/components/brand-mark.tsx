@@ -27,7 +27,7 @@ export function BrandMark({ href, variant = "on-light", size = "md", className }
     >
       <span
         className={cn(
-          "font-bold tracking-tight",
+          "font-extrabold tracking-[-0.03em]",
           size === "sm" && "text-base",
           size === "md" && "text-lg",
           size === "lg" && "text-3xl",
@@ -40,7 +40,7 @@ export function BrandMark({ href, variant = "on-light", size = "md", className }
         <span className="h-0.5 w-4 shrink-0 bg-lima" aria-hidden />
         <span
           className={cn(
-            "font-medium uppercase tracking-[0.14em]",
+            "type-overline",
             size === "lg" ? "text-[11px]" : "text-[9px]",
             onDark ? "text-white/70" : "text-azul-gris",
           )}

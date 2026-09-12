@@ -22,9 +22,9 @@ export function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error ? (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="type-caption text-destructive">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="type-caption text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );

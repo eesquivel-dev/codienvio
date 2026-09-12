@@ -17,12 +17,12 @@ export default async function PortalPage() {
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-lg border border-navy/10 bg-card p-6 shadow-sm sm:p-8">
-        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-lima">Portal CodiEnvio</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy">
+        <p className="type-overline text-lima">Portal CodiEnvio</p>
+        <h1 className="type-display-sm mt-2 text-navy">
           Hola{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
         </h1>
         <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
-        <p className="mt-3 max-w-2xl text-muted-foreground">
+        <p className="type-body mt-3 max-w-2xl text-muted-foreground">
           Cotiza un envío doméstico, compara paqueterías y compra la guía. El precio es final en
           MXN; el costo de Envia no se muestra.
         </p>
@@ -40,28 +40,28 @@ export default async function PortalPage() {
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <Card className="border-dashed shadow-none">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
                 <Package className="h-4 w-4" />
                 Guías compradas
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold tabular-nums text-navy">{purchased.length}</p>
+              <p className="text-2xl font-bold tracking-[-0.03em] tabular-nums text-navy">{purchased.length}</p>
             </CardContent>
           </Card>
           <Card className="border-dashed shadow-none">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
                 <History className="h-4 w-4" />
                 Último envío
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium tracking-[-0.011em]">
                 {recent[0] ? formatDateTimeMx(recent[0].createdAt) : "Aún no hay envíos"}
               </p>
               {recent[0] ? (
-                <p className="text-xs text-muted-foreground">{formatMxn(recent[0].price)}</p>
+                <p className="type-caption text-muted-foreground">{formatMxn(recent[0].price)}</p>
               ) : null}
             </CardContent>
           </Card>
@@ -81,9 +81,9 @@ export default async function PortalPage() {
 
       <section id="cotizar" className="scroll-mt-24 space-y-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-navy">Cotizar envío</h2>
+          <h2 className="type-title text-navy">Cotizar envío</h2>
           <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="type-body mt-2 text-muted-foreground">
             Completa origen, destino y medidas. Si solo quieres probar, usa el ejemplo CDMX → MTY.
           </p>
         </div>

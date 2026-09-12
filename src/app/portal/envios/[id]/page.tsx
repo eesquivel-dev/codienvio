@@ -150,18 +150,14 @@ export default async function ShipmentDetailPage({
             <div className="flex gap-3">
               <MapPin className="mt-0.5 h-4 w-4 text-primary" />
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Origen
-                </p>
+                <p className="type-overline text-muted-foreground">Origen</p>
                 <p>{formatAddress(origin)}</p>
               </div>
             </div>
             <div className="flex gap-3">
               <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Destino
-                </p>
+                <p className="type-overline text-muted-foreground">Destino</p>
                 <p>{formatAddress(destination)}</p>
               </div>
             </div>

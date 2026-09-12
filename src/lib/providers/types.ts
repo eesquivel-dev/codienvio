@@ -69,6 +69,10 @@ export type ZipLookup = {
   city: string;
   state: string;
   country: "MX";
+  /** Colonias / suburbs returned by Envia geocodes. */
+  suburbs: string[];
+  /** Municipio or alcaldía (Envia `regions.region_2`). */
+  municipality?: string;
 };
 
 /**

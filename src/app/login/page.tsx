@@ -45,8 +45,8 @@ function LoginForm() {
         <div className="mb-3 sm:hidden">
           <BrandMark />
         </div>
-        <CardTitle className="text-2xl font-bold">Iniciar sesión</CardTitle>
-        <CardDescription>Usa tu correo de cliente o administrador.</CardDescription>
+        <CardTitle className="type-title">Iniciar sesión</CardTitle>
+        <CardDescription className="type-body mt-1">Usa tu correo de cliente o administrador.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -78,7 +78,7 @@ function LoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="type-caption leading-relaxed text-muted-foreground">
             Cuentas demo: <code>admin@codienvio.mx</code> / Admin1234! · <code>cliente@demo.mx</code>{" "}
             / Cliente1234!
           </p>
@@ -97,16 +97,14 @@ export default function LoginPage() {
       </div>
       <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
         <BrandMark variant="on-dark" />
-        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-lima">
-          Portal de envíos
-        </p>
+        <p className="type-overline text-lima">Portal de envíos</p>
       </header>
       <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <Suspense>
           <LoginForm />
         </Suspense>
       </div>
-      <footer className="relative z-10 flex items-center justify-between border-t border-white/15 px-6 py-4 text-[10px] uppercase tracking-[0.14em] text-white/45 sm:px-10">
+      <footer className="type-overline relative z-10 flex items-center justify-between border-t border-white/15 px-6 py-4 text-white/45 sm:px-10">
         <span>CTI Group · CodiEnvio</span>
         <span>Identidad de marca v1.0</span>
       </footer>

@@ -15,11 +15,16 @@ function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement
 }
 
 function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("font-semibold leading-none tracking-tight text-navy", className)} {...props} />;
+  return <h3 className={cn("type-title-sm text-navy", className)} {...props} />;
 }
 
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  return (
+    <p
+      className={cn("text-[0.8125rem] leading-relaxed tracking-[-0.006em] text-muted-foreground", className)}
+      {...props}
+    />
+  );
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

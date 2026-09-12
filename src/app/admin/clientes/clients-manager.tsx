@@ -52,7 +52,8 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
         <CardHeader>
           <CardTitle>Nuevo cliente</CardTitle>
           <CardDescription>
-            Deja las comisiones vacías para usar la regla global. El saldo es un stub (sin cobros).
+            Deja las comisiones vacías para usar la regla global (por defecto 20% del costo Envia,
+            $0 fijo). El saldo es un stub (sin cobros).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,9 +161,7 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
                 Saldo stub: {client.balanceLabel}
               </p>
               <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  API keys
-                </p>
+                <p className="type-overline text-muted-foreground">API keys</p>
                 {client.keys.length === 0 ? (
                   <p className="text-muted-foreground">Sin API keys</p>
                 ) : (

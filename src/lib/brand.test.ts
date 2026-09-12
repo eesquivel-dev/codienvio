@@ -9,5 +9,7 @@ describe("CTI brand tokens", () => {
     expect(brand.grisAzulado).toBe("#8FA0B8");
     expect(brand.grisPapel).toBe("#F6F7F9");
     expect(brand.blanco).toBe("#FFFFFF");
+    expect(brand.typeface).toBe("Poppins");
+    expect(brand.typeWeights).toEqual([400, 500, 600, 700, 800]);
   });
 });

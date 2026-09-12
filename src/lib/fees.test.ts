@@ -10,6 +10,14 @@ describe("applyFee", () => {
     });
   });
 
+  it("marca 20% sobre el costo Envia sin cargo fijo", () => {
+    expect(applyFee(100, { percent: 20, fixedMxn: 0 })).toEqual({
+      providerCost: 100,
+      feeAmount: 20,
+      clientPrice: 120,
+    });
+  });
+
   it("permite solo porcentaje o solo fijo", () => {
     expect(applyFee(100, { percent: 10, fixedMxn: 0 })).toEqual({
       providerCost: 100,
