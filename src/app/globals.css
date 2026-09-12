@@ -1,23 +1,31 @@
 @import "tailwindcss";
 
+/* CTI Group Brand Identity Manual v1.0 — CodiEnvio tokens */
 :root {
-  --background: #f4f7f6;
-  --foreground: #12201c;
+  --navy: #0b1b4b;
+  --lima: #c4e000;
+  --navy-claro: #1f3e8c;
+  --gris-azulado: #8fa0b8;
+  --gris-papel: #f6f7f9;
+  --blanco: #ffffff;
+
+  --background: #f6f7f9;
+  --foreground: #0b1b4b;
   --card: #ffffff;
-  --card-foreground: #12201c;
-  --primary: #0f766e;
-  --primary-foreground: #f8fffd;
-  --secondary: #e7eeec;
-  --secondary-foreground: #1f3330;
-  --muted: #e8eeec;
-  --muted-foreground: #5b6b67;
-  --accent: #dceae6;
-  --accent-foreground: #12201c;
+  --card-foreground: #0b1b4b;
+  --primary: #0b1b4b;
+  --primary-foreground: #ffffff;
+  --secondary: #f6f7f9;
+  --secondary-foreground: #0b1b4b;
+  --muted: #eef1f6;
+  --muted-foreground: #8fa0b8;
+  --accent: #e8edf5;
+  --accent-foreground: #0b1b4b;
   --destructive: #b42318;
-  --border: #d5dfdc;
-  --input: #d5dfdc;
-  --ring: #0f766e;
-  --radius: 0.65rem;
+  --border: #d5dce6;
+  --input: #d5dce6;
+  --ring: #1f3e8c;
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -37,11 +45,17 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-navy: var(--navy);
+  --color-lima: var(--lima);
+  --color-navy-claro: var(--navy-claro);
+  --color-gris-azulado: var(--gris-azulado);
+  --color-gris-papel: var(--gris-papel);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins), Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 * {
@@ -51,5 +65,13 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }

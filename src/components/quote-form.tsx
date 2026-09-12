@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { buyAction, quoteAction } from "@/app/portal/actions";
+import { KeyFigure } from "@/components/key-figure";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -275,7 +276,7 @@ export function QuoteForm() {
       ) : null}
 
       {boughtId ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="rounded-md border border-lima bg-lima/15 px-3 py-2 text-sm text-navy">
           Guía comprada.{" "}
           <Link className="font-medium underline" href={`/portal/envios/${boughtId}`}>
             Ver rastreo y PDF
@@ -325,7 +326,9 @@ export function QuoteForm() {
                     <TableCell className="font-medium capitalize">{rate.carrier}</TableCell>
                     <TableCell>{rate.serviceName}</TableCell>
                     <TableCell>{rate.deliveryEstimate ?? "—"}</TableCell>
-                    <TableCell className="font-semibold">{formatMxn(rate.price)}</TableCell>
+                    <TableCell>
+                      <KeyFigure>{formatMxn(rate.price)}</KeyFigure>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         type="button"
@@ -445,7 +448,7 @@ function AddressCard({
         <Field label="Estado" htmlFor={`${prefix}-state`}>
           <select
             id={`${prefix}-state`}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+            className="flex h-9 w-full rounded-md border border-input bg-white px-3 text-sm text-navy shadow-sm"
             value={value.state}
             onChange={(e) => onChange({ ...value, state: e.target.value })}
           >

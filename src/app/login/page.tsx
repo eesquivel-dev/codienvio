@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Package } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/field";
-import { Suspense } from "react";
 
 function LoginForm() {
   const router = useRouter();
@@ -43,11 +42,9 @@ function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <div className="mb-2 flex items-center gap-2 font-semibold">
-          <Package className="h-5 w-5 text-primary" />
-          CodiEnvio
-        </div>
-        <CardTitle>Iniciar sesión</CardTitle>
+        <BrandMark compact />
+        <div className="h-1 w-10 bg-lima" aria-hidden />
+        <CardTitle className="pt-2">Iniciar sesión</CardTitle>
         <CardDescription>Usa tu correo de cliente o administrador.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -86,7 +83,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-navy px-4">
       <Suspense>
         <LoginForm />
       </Suspense>

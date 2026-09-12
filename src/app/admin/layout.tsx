@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { auth } from "@/lib/auth";
+import { getBrandLogoSrc } from "@/lib/brand-assets";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -9,10 +10,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gris-papel">
       <AppHeader
         name={session.user.name}
         role="ADMIN"
+        logoSrc={getBrandLogoSrc("onNavy")}
         items={[
           { href: "/admin", label: "Configuración" },
           { href: "/admin/clientes", label: "Clientes" },

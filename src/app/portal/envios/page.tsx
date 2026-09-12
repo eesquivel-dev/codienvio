@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireClient } from "@/lib/auth";
 import { formatMxn } from "@/lib/money";
 import { listShipments } from "@/lib/services/shipping";
+import { KeyFigure } from "@/components/key-figure";
+import { PageHeading } from "@/components/page-heading";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,10 +14,11 @@ export default async function PortalShipmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Mis envíos</h1>
-        <p className="text-sm text-muted-foreground">Guías compradas y su precio final.</p>
-      </div>
+      <PageHeading
+        eyebrow="Portal cliente"
+        title="Mis envíos"
+        description="Guías compradas y su precio final."
+      />
       <Card>
         <CardHeader>
           <CardTitle>Historial</CardTitle>
@@ -51,7 +54,9 @@ export default async function PortalShipmentsPage() {
                     </TableCell>
                     <TableCell className="capitalize">{item.carrier}</TableCell>
                     <TableCell>{item.trackingNumber ?? "—"}</TableCell>
-                    <TableCell>{formatMxn(item.price)}</TableCell>
+                    <TableCell>
+                      <KeyFigure>{formatMxn(item.price)}</KeyFigure>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={item.status === "PURCHASED" ? "success" : "destructive"}>
                         {item.status === "PURCHASED" ? "Comprada" : "Fallida"}

@@ -80,7 +80,7 @@ export function SettingsForm({ settings }: { settings: SettingsView }) {
               id="enviaEnvironment"
               name="enviaEnvironment"
               defaultValue={settings.enviaEnvironment}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm"
+              className="flex h-9 w-full rounded-md border border-input bg-white px-3 text-sm text-navy shadow-sm"
             >
               <option value="sandbox">Sandbox (api-test.envia.com)</option>
               <option value="production">Producción (api.envia.com)</option>
@@ -116,7 +116,7 @@ export function SettingsForm({ settings }: { settings: SettingsView }) {
             />
           </Field>
           {error ? <p className="sm:col-span-2 text-sm text-destructive">{error}</p> : null}
-          {message ? <p className="sm:col-span-2 text-sm text-emerald-700">{message}</p> : null}
+          {message ? <p className="sm:col-span-2 text-sm font-medium text-navy-claro">{message}</p> : null}
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" disabled={saving}>
               {saving ? "Guardando…" : "Guardar"}

@@ -4,6 +4,7 @@ import { requireClient } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
 import { formatMxn } from "@/lib/money";
 import { getShipment } from "@/lib/services/shipping";
+import { KeyFigure } from "@/components/key-figure";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,10 @@ export default async function ShipmentDetailPage({
         <Link href="/portal/envios" className="text-sm text-muted-foreground hover:underline">
           ← Mis envíos
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Guía {shipment.trackingNumber ?? shipment.id}</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy">
+          Guía {shipment.trackingNumber ?? shipment.id}
+        </h1>
+        <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -54,7 +58,9 @@ export default async function ShipmentDetailPage({
             <p className="capitalize">
               {shipment.carrier} · {shipment.serviceName}
             </p>
-            <p>Precio: {formatMxn(shipment.price)}</p>
+            <p>
+              Precio: <KeyFigure>{formatMxn(shipment.price)}</KeyFigure>
+            </p>
             {shipment.trackingUrl ? (
               <p>
                 <a className="underline" href={shipment.trackingUrl} target="_blank" rel="noreferrer">
