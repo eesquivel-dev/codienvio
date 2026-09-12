@@ -67,8 +67,8 @@ model Settings {
   id                 String   @id @default("default")
   enviaTokenEnc      String?
   enviaEnvironment   String   @default("sandbox")
-  defaultFeePercent  Decimal  @default(15) @db.Decimal(6, 2)
-  defaultFeeFixedMxn Decimal  @default(10) @db.Decimal(12, 2)
+  defaultFeePercent  Decimal  @default(20) @db.Decimal(6, 2)
+  defaultFeeFixedMxn Decimal  @default(0) @db.Decimal(12, 2)
   mockMode           Boolean  @default(false)
   updatedAt          DateTime @updatedAt
 }

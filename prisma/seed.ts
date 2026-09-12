@@ -16,8 +16,8 @@ async function main() {
     create: {
       id: "default",
       enviaEnvironment: "sandbox",
-      defaultFeePercent: 15,
-      defaultFeeFixedMxn: 10,
+      defaultFeePercent: 20,
+      defaultFeeFixedMxn: 0,
       mockMode: process.env.ENVIA_MOCK === "true" || !process.env.ENVIA_TOKEN,
     },
   });

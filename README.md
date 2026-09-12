@@ -40,9 +40,11 @@ El token JWT de Envia vive solo en el servidor (cifrado en `Settings` o `ENVIA_T
 
 ## Modelo de comisión
 
+Markup sobre el **costo Envia** (no margen sobre el precio de venta):
+
 `client_price = provider_cost + (provider_cost * %) + cargo_fijo MXN`
 
-- Regla global en Admin.
+- **Regla global por defecto:** 20% del costo Envia y **$0** fijo. Se cambia en Admin → Configuración.
 - Override opcional por cliente (porcentaje y/o fijo).
 - Se persisten `provider_cost`, `fee_amount` y `client_price` en cotizaciones, envíos y ventas. El cliente solo ve `price`.
 

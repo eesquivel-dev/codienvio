@@ -62,7 +62,8 @@ export default async function HomePage() {
             <CardTitle className="text-base">Comisión por cliente</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Porcentaje y/o cargo fijo en MXN. El costo del proveedor nunca se expone al cliente.
+            Por defecto 20% del costo Envia y $0 fijo. El costo del proveedor nunca se expone al
+            cliente.
           </CardContent>
         </Card>
       </section>
