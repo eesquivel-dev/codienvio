@@ -9,7 +9,13 @@ import { requireAdmin } from "@/lib/auth";
 import { getActiveProvider, getSettingsRow, resolveEnviaToken, saveSettings } from "@/lib/settings";
 import { getAdminDashboardStats } from "@/lib/services/shipping";
 import { adjustClientWallet } from "@/lib/wallet";
-import { adjustBalanceSchema, createClientSchema, settingsSchema } from "@/lib/validations";
+import {
+  adjustBalanceSchema,
+  createClientSchema,
+  markBillingPeriodSchema,
+  settingsSchema,
+  updateClientSchema,
+} from "@/lib/validations";
 
 function actionError(error: unknown) {
   const { body } = errorToResponse(error);
@@ -102,6 +108,8 @@ export async function createClientAction(formData: FormData) {
     });
 
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin/integraciones");
+    revalidatePath("/admin/facturacion");
     return { ok: true as const, clientId: user.client?.id };
   } catch (error) {
     return actionError(error);
@@ -123,6 +131,7 @@ export async function createApiKeyAction(clientId: string, name: string) {
       },
     });
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin/integraciones");
     return { ok: true as const, apiKey: generated.plain, prefix: generated.prefix };
   } catch (error) {
     return actionError(error);
@@ -137,6 +146,7 @@ export async function revokeApiKeyAction(keyId: string) {
       data: { revokedAt: new Date() },
     });
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin/integraciones");
     return { ok: true as const };
   } catch (error) {
     return actionError(error);
@@ -148,6 +158,8 @@ export async function toggleClientAction(clientId: string, active: boolean) {
     await requireAdmin();
     await prisma.client.update({ where: { id: clientId }, data: { active } });
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin/integraciones");
+    revalidatePath("/admin/facturacion");
     return { ok: true as const };
   } catch (error) {
     return actionError(error);
@@ -175,8 +187,84 @@ export async function adjustClientBalanceAction(formData: FormData) {
     });
 
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin/facturacion");
     revalidatePath("/portal");
     return { ok: true as const, balanceMxn: result.balanceMxn };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function updateClientAction(formData: FormData) {
+  try {
+    await requireAdmin();
+    const parsed = updateClientSchema.parse({
+      clientId: formData.get("clientId"),
+      companyName: formData.get("companyName"),
+      feePercent: formData.get("feePercent") === "" ? null : formData.get("feePercent"),
+      feeFixedMxn: formData.get("feeFixedMxn") === "" ? null : formData.get("feeFixedMxn"),
+    });
+    const client = await prisma.client.findUnique({ where: { id: parsed.clientId } });
+    if (!client) throw new AppError("Cliente no encontrado", 404);
+
+    await prisma.client.update({
+      where: { id: parsed.clientId },
+      data: {
+        companyName: parsed.companyName,
+        feePercent: parsed.feePercent ?? null,
+        feeFixedMxn: parsed.feeFixedMxn ?? null,
+      },
+    });
+    revalidatePath("/admin/clientes");
+    revalidatePath("/admin/integraciones");
+    revalidatePath("/admin/facturacion");
+    return { ok: true as const };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function markBillingPeriodAction(formData: FormData) {
+  try {
+    const session = await requireAdmin();
+    const parsed = markBillingPeriodSchema.parse({
+      clientId: formData.get("clientId"),
+      year: formData.get("year"),
+      month: formData.get("month"),
+      status: formData.get("status"),
+      note: formData.get("note") ?? "",
+    });
+    const client = await prisma.client.findUnique({ where: { id: parsed.clientId } });
+    if (!client) throw new AppError("Cliente no encontrado", 404);
+
+    const marked = parsed.status === "FACTURADO";
+    await prisma.billingPeriod.upsert({
+      where: {
+        clientId_year_month: {
+          clientId: parsed.clientId,
+          year: parsed.year,
+          month: parsed.month,
+        },
+      },
+      create: {
+        clientId: parsed.clientId,
+        year: parsed.year,
+        month: parsed.month,
+        status: parsed.status,
+        note: parsed.note || null,
+        markedAt: marked ? new Date() : null,
+        markedById: marked ? session.user.id : null,
+      },
+      update: {
+        status: parsed.status,
+        note: parsed.note || null,
+        markedAt: marked ? new Date() : null,
+        markedById: marked ? session.user.id : null,
+      },
+    });
+
+    revalidatePath("/admin/facturacion");
+    return { ok: true as const };
   } catch (error) {
     return actionError(error);
   }

@@ -33,10 +33,10 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-40 bg-navy text-white">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
-        <div className="flex min-w-0 items-center gap-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
+        <div className="flex min-w-0 items-center gap-5">
           <BrandMark href={home} variant="on-dark" size="sm" />
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-0.5 lg:flex">
             {items.map((item) => {
               const active = isActive(pathname, item.href);
               return (
@@ -44,7 +44,7 @@ export function AppHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+                    "rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 transition-colors hover:bg-white/10 hover:text-white",
                     active && "bg-white/10 text-white",
                   )}
                 >
@@ -70,7 +70,7 @@ export function AppHeader({
             type="button"
             variant="inverse"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             onClick={() => setOpen((value) => !value)}
           >
@@ -80,7 +80,7 @@ export function AppHeader({
       </div>
       {open ? (
         <nav className="border-t border-white/15 bg-navy px-4 py-3 md:hidden">
-          <div className="mx-auto flex max-w-6xl flex-col gap-1">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1">
             {items.map((item) => {
               const active = isActive(pathname, item.href);
               return (
