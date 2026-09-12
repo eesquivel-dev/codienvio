@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: CodiEnvio API
+  version: 1.0.0
+  description: |
+    Revendedor de guías Envia.com (México). Autenticación por API key de cliente.
+    Las respuestas de cliente solo incluyen `price` (MXN). Nunca se expone `provider_cost`.
+servers:
+  - url: http://localhost:3000
+    description: Local
+paths:
+  /v1/rates:
+    post:
+      summary: Cotizar envío doméstico MX
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Cotización con tarifas marcadas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteResponse"
+        "401":
+          description: API key inválida
+        "422":
+          description: Validación
+  /v1/shipments:
+    post:
+      summary: Comprar guía a partir de una cotización
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quoteId, rateId]
+              properties:
+                quoteId:
+                  type: string
+                rateId:
+                  type: string
+      responses:
+        "201":
+          description: Guía comprada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+  /v1/shipments/{id}:
+    get:
+      summary: Consultar envío
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Envío
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+        "404":
+          description: No encontrado
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key del cliente (ce_live_...)
+  schemas:
+    Address:
+      type: object
+      required: [name, phone, street, city, state, postalCode]
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        street:
+          type: string
+        number:
+          type: string
+        district:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+          description: Código de 2 letras (CX, NL, JA, ...)
+        postalCode:
+          type: string
+          pattern: "^\\d{5}$"
+        country:
+          type: string
+          enum: [MX]
+        reference:
+          type: string
+    Package:
+      type: object
+      required: [content, weightKg, lengthCm, widthCm, heightCm, declaredValueMxn]
+      properties:
+        type:
+          type: string
+          enum: [box, envelope, pallet]
+        content:
+          type: string
+        weightKg:
+          type: number
+        lengthCm:
+          type: number
+        widthCm:
+          type: number
+        heightCm:
+          type: number
+        declaredValueMxn:
+          type: number
+    QuoteRequest:
+      type: object
+      required: [origin, destination, packages]
+      properties:
+        origin:
+          $ref: "#/components/schemas/Address"
+        destination:
+          $ref: "#/components/schemas/Address"
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Package"
+    Rate:
+      type: object
+      properties:
+        id:
+          type: string
+        carrier:
+          type: string
+        service:
+          type: string
+        serviceName:
+          type: string
+        deliveryEstimate:
+          type: string
+        currency:
+          type: string
+          enum: [MXN]
+        price:
+          type: number
+          description: Precio al cliente (MXN). No incluye desglose de costo Envia.
+    QuoteResponse:
+      type: object
+      properties:
+        quoteId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        currency:
+          type: string
+          enum: [MXN]
+        rates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rate"
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [PURCHASED, FAILED]
+        carrier:
+          type: string
+        service:
+          type: string
+        serviceName:
+          type: string
+        trackingNumber:
+          type: string
+        trackingUrl:
+          type: string
+        labelUrl:
+          type: string
+        currency:
+          type: string
+          enum: [MXN]
+        price:
+          type: number
+        createdAt:
+          type: string
+          format: date-time

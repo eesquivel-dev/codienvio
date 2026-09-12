@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum QuoteStatus {
+  OPEN
+  EXPIRED
+  CONVERTED
+}
+
+enum ShipmentStatus {
+  PURCHASED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  client       Client?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  feePercent  Decimal?   @db.Decimal(6, 2)
+  feeFixedMxn Decimal?   @db.Decimal(12, 2)
+  balanceMxn  Decimal    @default(0) @db.Decimal(12, 2)
+  active      Boolean    @default(true)
+  apiKeys     ApiKey[]
+  quotes      Quote[]
+  shipments   Shipment[]
+  sales       Sale[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name       String
+  prefix     String    @unique
+  hash       String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Settings {
+  id                 String   @id @default("default")
+  enviaTokenEnc      String?
+  enviaEnvironment   String   @default("sandbox")
+  defaultFeePercent  Decimal  @default(15) @db.Decimal(6, 2)
+  defaultFeeFixedMxn Decimal  @default(10) @db.Decimal(12, 2)
+  mockMode           Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
+model Quote {
+  id        String      @id @default(cuid())
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id])
+  provider  String      @default("envia")
+  status    QuoteStatus @default(OPEN)
+  request   Json
+  expiresAt DateTime
+  rates     QuoteRate[]
+  shipment  Shipment?
+  createdAt DateTime    @default(now())
+}
+
+model QuoteRate {
+  id               String     @id @default(cuid())
+  quoteId          String
+  quote            Quote      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  provider         String
+  carrier          String
+  service          String
+  serviceName      String
+  deliveryEstimate String?
+  currency         String     @default("MXN")
+  providerCost     Decimal    @db.Decimal(12, 2)
+  feeAmount        Decimal    @db.Decimal(12, 2)
+  clientPrice      Decimal    @db.Decimal(12, 2)
+  raw              Json?
+  shipment         Shipment?
+}
+
+model Shipment {
+  id                   String         @id @default(cuid())
+  clientId             String
+  client               Client         @relation(fields: [clientId], references: [id])
+  quoteId              String?        @unique
+  quote                Quote?         @relation(fields: [quoteId], references: [id])
+  quoteRateId          String?        @unique
+  quoteRate            QuoteRate?     @relation(fields: [quoteRateId], references: [id])
+  provider             String
+  status               ShipmentStatus
+  carrier              String
+  service              String
+  serviceName          String?
+  trackingNumber       String?
+  trackingUrl          String?
+  labelUrl             String?
+  providerShipmentId   String?
+  currency             String         @default("MXN")
+  providerCost         Decimal        @db.Decimal(12, 2)
+  feeAmount            Decimal        @db.Decimal(12, 2)
+  clientPrice          Decimal        @db.Decimal(12, 2)
+  origin               Json
+  destination          Json
+  packages             Json
+  errorMessage         String?
+  sale                 Sale?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model Sale {
+  id           String   @id @default(cuid())
+  shipmentId   String   @unique
+  shipment     Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id])
+  providerCost Decimal  @db.Decimal(12, 2)
+  feeAmount    Decimal  @db.Decimal(12, 2)
+  clientPrice  Decimal  @db.Decimal(12, 2)
+  currency     String   @default("MXN")
+  createdAt    DateTime @default(now())
+}
