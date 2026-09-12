@@ -33,11 +33,20 @@ type ClientKeys = {
   }>;
 };
 
+type MercadoPagoStatusView = {
+  configured: boolean;
+  hasAccessToken: boolean;
+  hasPublicKey: boolean;
+  hasWebhookSecret: boolean;
+};
+
 export function IntegrationsCatalog({
   envia,
+  mercadoPago,
   clients,
 }: {
   envia: EnviaStatus;
+  mercadoPago: MercadoPagoStatusView;
   clients: ClientKeys[];
 }) {
   return (
@@ -103,16 +112,36 @@ export function IntegrationsCatalog({
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Mercado Pago</CardTitle>
-              <Badge variant="outline">Próximamente</Badge>
+              <Badge variant={mercadoPago.configured ? "success" : "outline"}>
+                {mercadoPago.configured ? "En vivo" : "Próximamente"}
+              </Badge>
             </div>
             <CardDescription>
-              Checkout para que el cliente recargue su saldo. Hoy las cargas son manuales en
-              Clientes (Cargar saldo).
+              Recarga de saldo del cliente desde el portal (Checkout Pro). La carga manual en
+              Clientes sigue disponible. Los secretos no se muestran.
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Facturación ya registra las cargas de saldo para el estado de cuenta. El cobro con
-            Mercado Pago se conectará después, sin cambiar el ledger.
+          <CardContent className="space-y-3 text-sm">
+            <StatusLine
+              label="Access token"
+              value={mercadoPago.hasAccessToken ? "Presente" : "Vacío"}
+              ok={mercadoPago.hasAccessToken}
+            />
+            <StatusLine
+              label="Public key"
+              value={mercadoPago.hasPublicKey ? "Presente" : "Vacía"}
+              ok={mercadoPago.hasPublicKey}
+            />
+            <StatusLine
+              label="Webhook secret"
+              value={mercadoPago.hasWebhookSecret ? "Presente" : "Opcional / vacío"}
+              ok={mercadoPago.hasWebhookSecret || !mercadoPago.configured}
+            />
+            <p className="text-muted-foreground">
+              {mercadoPago.configured
+                ? "Los clientes pueden recargar en Portal → Saldo. El webhook acredita el ledger una sola vez."
+                : "Configura MERCADOPAGO_ACCESS_TOKEN (y la public key) en el entorno para activar el checkout."}
+            </p>
           </CardContent>
         </Card>
       </div>

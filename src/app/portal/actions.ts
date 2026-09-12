@@ -6,6 +6,7 @@ import { errorToResponse } from "@/lib/errors";
 import { createQuote, purchaseFromQuote } from "@/lib/services/shipping";
 import { quoteRequestSchema } from "@/lib/validations";
 import { getClientWallet } from "@/lib/wallet";
+import { createWalletTopUpCheckout } from "@/lib/wallet-topup";
 
 export async function quoteAction(input: unknown) {
   try {
@@ -27,6 +28,21 @@ export async function buyAction(quoteId: string, rateId: string) {
     revalidatePath("/portal");
     revalidatePath("/admin/clientes");
     return { ok: true as const, shipment, balanceMxn: wallet.balanceMxn };
+  } catch (error) {
+    const { body } = errorToResponse(error);
+    return { ok: false as const, error: body.error.message };
+  }
+}
+
+export async function startWalletTopUpAction(amountMxn: number) {
+  try {
+    const session = await requireClient();
+    const checkout = await createWalletTopUpCheckout({
+      clientId: session.user.clientId!,
+      amountMxn,
+      payerEmail: session.user.email,
+    });
+    return { ok: true as const, checkoutUrl: checkout.checkoutUrl };
   } catch (error) {
     const { body } = errorToResponse(error);
     return { ok: false as const, error: body.error.message };

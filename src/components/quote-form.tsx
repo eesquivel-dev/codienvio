@@ -224,7 +224,12 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
           Saldo disponible: <strong className="tabular-nums">{formatMxn(balanceMxn)}</strong>
         </span>
         {balanceMxn <= 0 ? (
-          <span>Pide a tu administrador que cargue saldo para comprar guías.</span>
+          <span>
+            <Link href="/portal/saldo" className="font-semibold underline underline-offset-2">
+              Recarga saldo
+            </Link>{" "}
+            con Mercado Pago para comprar guías.
+          </span>
         ) : null}
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
@@ -479,7 +484,10 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
                 </p>
                 {boughtId ? null : selectedRate && !selectedAffordable ? (
                   <p className="mt-1 text-sm text-destructive">
-                    {insufficientBalanceMessage(balanceMxn, selectedRate.price)}
+                    {insufficientBalanceMessage(balanceMxn, selectedRate.price)}{" "}
+                    <Link href="/portal/saldo" className="font-semibold underline underline-offset-2">
+                      Recargar saldo
+                    </Link>
                   </p>
                 ) : selectedRate ? (
                   <p className="mt-1 text-sm text-muted-foreground">

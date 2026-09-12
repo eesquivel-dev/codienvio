@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { adjustBalanceSchema, markBillingPeriodSchema, quoteRequestSchema, updateClientSchema } from "@/lib/validations";
+import {
+  adjustBalanceSchema,
+  markBillingPeriodSchema,
+  quoteRequestSchema,
+  updateClientSchema,
+  walletTopUpSchema,
+} from "@/lib/validations";
 
 const valid = {
   origin: {
@@ -69,6 +75,20 @@ describe("adjustBalanceSchema", () => {
         note: "x",
       }),
     ).toThrow();
+  });
+});
+
+describe("walletTopUpSchema", () => {
+  it("acepta montos dentro del rango", () => {
+    expect(walletTopUpSchema.parse({ amountMxn: "200" })).toEqual({ amountMxn: 200 });
+    expect(walletTopUpSchema.parse({ amountMxn: 50 })).toEqual({ amountMxn: 50 });
+    expect(walletTopUpSchema.parse({ amountMxn: 50000 })).toEqual({ amountMxn: 50000 });
+  });
+
+  it("rechaza montos fuera de rango o inválidos", () => {
+    expect(() => walletTopUpSchema.parse({ amountMxn: 49.99 })).toThrow(/mínimo/i);
+    expect(() => walletTopUpSchema.parse({ amountMxn: 50000.01 })).toThrow(/máximo/i);
+    expect(() => walletTopUpSchema.parse({ amountMxn: "abc" })).toThrow();
   });
 });
 

@@ -61,6 +61,7 @@ model Client {
   shipments   Shipment[]
   sales           Sale[]
   walletTxns      WalletTransaction[]
+  walletTopUps    WalletTopUp[]
   billingPeriods  BillingPeriod[]
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -162,19 +163,44 @@ model Sale {
   createdAt    DateTime @default(now())
 }
 
+enum WalletTopUpStatus {
+  PENDING
+  APPROVED
+  FAILED
+}
+
 /// Prepaid MXN ledger. amountMxn is signed: + top-up / − purchase or debit.
 model WalletTransaction {
-  id              String        @id @default(cuid())
-  clientId        String
-  client          Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  amountMxn       Decimal       @db.Decimal(12, 2)
-  type            WalletTxnType
-  shipmentId      String?       @unique
-  shipment        Shipment?     @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
-  note            String?
-  createdByUserId String?
-  createdBy       User?         @relation("WalletCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdAt       DateTime      @default(now())
+  id                   String        @id @default(cuid())
+  clientId             String
+  client               Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amountMxn            Decimal       @db.Decimal(12, 2)
+  type                 WalletTxnType
+  shipmentId           String?       @unique
+  shipment             Shipment?     @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+  note                 String?
+  createdByUserId      String?
+  createdBy            User?         @relation("WalletCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  mercadopagoPaymentId String?       @unique
+  topUp                WalletTopUp?
+  createdAt            DateTime      @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+/// Checkout Pro order for a client wallet top-up. Credited only when MP payment is approved.
+model WalletTopUp {
+  id                   String            @id @default(cuid())
+  clientId             String
+  client               Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  amountMxn            Decimal           @db.Decimal(12, 2)
+  status               WalletTopUpStatus @default(PENDING)
+  preferenceId         String?
+  mercadopagoPaymentId String?           @unique
+  walletTxnId          String?           @unique
+  walletTxn            WalletTransaction? @relation(fields: [walletTxnId], references: [id], onDelete: SetNull)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   @@index([clientId, createdAt])
 }

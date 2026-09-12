@@ -3,6 +3,7 @@ import { getAdminSettingsView } from "@/app/admin/actions";
 import { IntegrationsCatalog } from "@/app/admin/integraciones/integrations-catalog";
 import { PageHeader } from "@/components/page-header";
 import { requireAdmin } from "@/lib/auth";
+import { getMercadoPagoStatus } from "@/lib/mercadopago";
 
 export default async function IntegrationsPage() {
   await requireAdmin();
@@ -21,7 +22,7 @@ export default async function IntegrationsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Integraciones"
-        description="Estado de Envía, llaves API por cliente y conectores próximos (iVoy, Mercado Pago). Los secretos se editan en Configuración."
+        description="Estado de Envía, Mercado Pago y llaves API por cliente. Los secretos nunca se muestran aquí."
       />
       <IntegrationsCatalog
         envia={{
@@ -31,6 +32,7 @@ export default async function IntegrationsPage() {
           hasEnvToken: settings.hasEnvToken,
           usingMock: settings.usingMock,
         }}
+        mercadoPago={getMercadoPagoStatus()}
         clients={clients.map((client) => ({
           id: client.id,
           companyName: client.companyName,

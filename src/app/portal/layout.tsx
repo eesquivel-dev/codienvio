@@ -20,6 +20,7 @@ export default async function PortalLayout({ children }: { children: React.React
         balanceLabel={formatMxn(wallet.balanceMxn)}
         items={[
           { href: "/portal", label: "Inicio" },
+          { href: "/portal/saldo", label: "Saldo" },
           { href: "/portal/envios", label: "Mis envíos" },
           { href: "/docs", label: "API" },
         ]}

@@ -88,7 +88,7 @@ async function main() {
   console.log(`Cliente: ${DEMO_CLIENT_EMAIL} / ${DEMO_CLIENT_PASSWORD}`);
   console.log(`API key: ${DEMO_API_KEY}`);
   console.log(`Admin id: ${admin.id}`);
-  console.log("Saldo demo: $0 — carga saldo en Admin → Clientes para comprar guías.");
+  console.log("Saldo demo: $0 — recarga en Portal → Saldo (Mercado Pago) o carga en Admin → Clientes.");
 }
 
 main()
