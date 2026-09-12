@@ -8,4 +8,6 @@ export const brand = {
   blanco: "#FFFFFF",
   name: "CodiEnvio",
   group: "CTI Group",
+  typeface: "Poppins",
+  typeWeights: [400, 500, 600, 700, 800] as const,
 } as const;

@@ -19,8 +19,8 @@ export function BrandLockup({
         <span
           className={
             tone === "inverse"
-              ? "text-[10px] font-medium uppercase tracking-[0.14em] text-white/60"
-              : "text-[10px] font-medium uppercase tracking-[0.14em] text-azul-gris"
+              ? "type-overline text-white/60"
+              : "type-overline text-azul-gris"
           }
         >
           {subtitle}

@@ -8,7 +8,7 @@ export default function DocsPage() {
       <header className="bg-navy">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <BrandMark href="/" variant="on-dark" size="sm" />
-          <Link href="/login" className="text-sm font-medium text-lima hover:underline">
+          <Link href="/login" className="text-[0.8125rem] font-semibold tracking-[-0.011em] text-lima hover:underline">
             Iniciar sesión
           </Link>
         </div>
@@ -19,9 +19,9 @@ export default function DocsPage() {
           <Link href="/" className="text-sm text-muted-foreground hover:underline">
             ← CodiEnvio
           </Link>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy">API pública v1</h1>
+          <h1 className="type-display-sm mt-2 text-navy">API pública v1</h1>
           <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
-          <p className="mt-2 text-muted-foreground">
+          <p className="type-body mt-2 text-muted-foreground">
             Autenticación con API key por cliente. El token de Envia nunca viaja al cliente. Las
             respuestas solo incluyen <code>price</code> (MXN), nunca el costo del proveedor.
           </p>

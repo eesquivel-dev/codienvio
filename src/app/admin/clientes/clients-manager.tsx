@@ -160,9 +160,7 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
                 Saldo stub: {client.balanceLabel}
               </p>
               <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  API keys
-                </p>
+                <p className="type-overline text-muted-foreground">API keys</p>
                 {client.keys.length === 0 ? (
                   <p className="text-muted-foreground">Sin API keys</p>
                 ) : (

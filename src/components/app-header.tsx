@@ -42,7 +42,7 @@ export function AppHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+                    "rounded-md px-3 py-1.5 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 transition-colors hover:bg-white/10 hover:text-white",
                     active && "bg-white/10 text-white",
                   )}
                 >
@@ -53,7 +53,7 @@ export function AppHeader({
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden max-w-[14rem] truncate text-sm text-white/65 sm:inline">
+          <span className="hidden max-w-[14rem] truncate text-[0.8125rem] font-medium tracking-[-0.011em] text-white/65 sm:inline">
             {name} · {role === "ADMIN" ? "Admin" : "Cliente"}
           </span>
           <Button variant="inverse" size="sm" onClick={() => signOut({ callbackUrl: "/login" })}>
@@ -82,8 +82,8 @@ export function AppHeader({
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white",
-                    active && "bg-white/10 font-medium text-white",
+                    "rounded-md px-3 py-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 hover:bg-white/10 hover:text-white",
+                    active && "bg-white/10 text-white",
                   )}
                 >
                   {item.label}

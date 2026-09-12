@@ -15,19 +15,13 @@ export default async function HomePage() {
         <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-16 sm:py-20">
           <div className="flex items-center justify-between">
             <BrandMark variant="on-dark" size="lg" />
-            <p className="hidden text-[10px] font-medium uppercase tracking-[0.16em] text-lima sm:block">
-              México · Envia.com
-            </p>
+            <p className="type-overline hidden text-lima sm:block">México · Envia.com</p>
           </div>
           <div className="max-w-2xl space-y-4">
-            <p className="text-sm font-medium uppercase tracking-[0.16em] text-lima sm:hidden">
-              México · Envia.com
-            </p>
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              Guías de envío con precio final
-            </h1>
+            <p className="type-overline text-lima sm:hidden">México · Envia.com</p>
+            <h1 className="type-display text-white">Guías de envío con precio final</h1>
             <div className="h-1 w-12 bg-lima" aria-hidden />
-            <p className="text-lg text-white/75">
+            <p className="type-body text-lg text-white/75">
               Cotiza y compra envíos domésticos con la cuenta negociada de Envia. El portal y la
               API muestran solo el precio final; el costo del proveedor nunca se expone al cliente.
             </p>

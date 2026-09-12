@@ -107,14 +107,14 @@ function StatCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
           {icon}
           {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold tabular-nums text-navy">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        <p className="text-2xl font-bold tracking-[-0.03em] tabular-nums text-navy">{value}</p>
+        <p className="type-caption mt-1 text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>
   );
