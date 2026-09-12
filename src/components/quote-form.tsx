@@ -419,7 +419,7 @@ export function QuoteForm() {
                       </span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold">{carrierLabel(rate.carrier)}</p>
+                          <p className="font-semibold tracking-[-0.011em]">{carrierLabel(rate.carrier)}</p>
                           {rate.id === cheapestId ? (
                             <Badge variant="success">Mejor precio</Badge>
                           ) : null}
@@ -434,7 +434,7 @@ export function QuoteForm() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Precio</p>
-                        <p className="text-lg font-semibold tabular-nums text-navy">{formatMxn(rate.price)}</p>
+                        <p className="text-lg font-bold tracking-[-0.02em] tabular-nums text-navy">{formatMxn(rate.price)}</p>
                       </div>
                     </div>
                   </button>
