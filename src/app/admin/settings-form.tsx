@@ -109,12 +109,16 @@ export function SettingsForm({ settings }: { settings: SettingsView }) {
         <CardHeader>
           <CardTitle>Comisión global</CardTitle>
           <CardDescription>
-            Precio al cliente = costo Envia + (costo × %) + cargo fijo MXN. Puedes overridear por
-            cliente.
+            Markup sobre el costo Envia: precio = costo + (costo × %) + cargo fijo MXN. Por
+            defecto 20% y $0 fijo. Puedes overridear por cliente.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Field label="Comisión % global" htmlFor="defaultFeePercent">
+          <Field
+            label="Comisión % global"
+            htmlFor="defaultFeePercent"
+            hint="Porcentaje del costo Envia. Por defecto 20%."
+          >
             <Input
               id="defaultFeePercent"
               name="defaultFeePercent"
@@ -126,7 +130,11 @@ export function SettingsForm({ settings }: { settings: SettingsView }) {
               required
             />
           </Field>
-          <Field label="Comisión fija MXN" htmlFor="defaultFeeFixedMxn">
+          <Field
+            label="Comisión fija MXN"
+            htmlFor="defaultFeeFixedMxn"
+            hint="Cargo fijo adicional. Por defecto $0."
+          >
             <Input
               id="defaultFeeFixedMxn"
               name="defaultFeeFixedMxn"

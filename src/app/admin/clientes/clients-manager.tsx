@@ -52,7 +52,8 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
         <CardHeader>
           <CardTitle>Nuevo cliente</CardTitle>
           <CardDescription>
-            Deja las comisiones vacías para usar la regla global. El saldo es un stub (sin cobros).
+            Deja las comisiones vacías para usar la regla global (por defecto 20% del costo Envia,
+            $0 fijo). El saldo es un stub (sin cobros).
           </CardDescription>
         </CardHeader>
         <CardContent>
