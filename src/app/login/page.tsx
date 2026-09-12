@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Package } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/field";
-import { Suspense } from "react";
 
 function LoginForm() {
   const router = useRouter();
@@ -41,13 +40,12 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-0">
       <CardHeader>
-        <div className="mb-2 flex items-center gap-2 font-semibold">
-          <Package className="h-5 w-5 text-primary" />
-          CodiEnvio
+        <div className="mb-3 sm:hidden">
+          <BrandMark />
         </div>
-        <CardTitle>Iniciar sesión</CardTitle>
+        <CardTitle className="text-2xl font-bold">Iniciar sesión</CardTitle>
         <CardDescription>Usa tu correo de cliente o administrador.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -86,10 +84,29 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+    <main className="relative flex min-h-screen flex-col bg-navy">
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-navy-claro/50" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-navy-claro/35" />
+      </div>
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
+        <BrandMark variant="on-dark" />
+        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-lima">
+          Portal de envíos
+        </p>
+      </header>
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
+      <footer className="relative z-10 flex items-center justify-between border-t border-white/15 px-6 py-4 text-[10px] uppercase tracking-[0.14em] text-white/45 sm:px-10">
+        <span>CTI Group · CodiEnvio</span>
+        <span>Identidad de marca v1.0</span>
+      </footer>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { formatMxn } from "@/lib/money";
 import { listAllShipments } from "@/lib/services/shipping";
+import { PageHeading } from "@/components/page-heading";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,12 +12,9 @@ export default async function AdminShipmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Envíos y margen</h1>
-        <p className="text-sm text-muted-foreground">
-          Vista admin: costo Envia, comisión y precio al cliente.
-        </p>
-      </div>
+      <PageHeading title="Envíos y margen">
+        Vista admin: costo Envia, comisión y precio al cliente.
+      </PageHeading>
       <Card>
         <CardHeader>
           <CardTitle>Últimos envíos</CardTitle>
@@ -55,7 +53,7 @@ export default async function AdminShipmentsPage() {
                     <TableCell>{item.trackingNumber ?? "—"}</TableCell>
                     <TableCell>{formatMxn(item.providerCost)}</TableCell>
                     <TableCell>{formatMxn(item.feeAmount)}</TableCell>
-                    <TableCell className="font-medium">{formatMxn(item.price)}</TableCell>
+                    <TableCell className="font-semibold text-navy">{formatMxn(item.price)}</TableCell>
                     <TableCell>
                       <Badge variant={item.status === "PURCHASED" ? "success" : "destructive"}>
                         {item.status === "PURCHASED" ? "Comprada" : "Fallida"}

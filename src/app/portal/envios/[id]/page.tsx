@@ -37,7 +37,10 @@ export default async function ShipmentDetailPage({
         <Link href="/portal/envios" className="text-sm text-muted-foreground hover:underline">
           ← Mis envíos
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Guía {shipment.trackingNumber ?? shipment.id}</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy">
+          Guía {shipment.trackingNumber ?? shipment.id}
+        </h1>
+        <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>

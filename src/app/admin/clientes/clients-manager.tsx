@@ -74,7 +74,7 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {plainKey ? (
-        <p className="rounded-md border bg-amber-50 px-3 py-2 text-sm">
+        <p className="rounded-md border border-lima/40 bg-lima/15 px-3 py-2 text-sm text-navy">
           API key (cópiala ahora): <code className="break-all font-mono">{plainKey}</code>
         </p>
       ) : null}
