@@ -89,8 +89,8 @@ export function IntegrationsCatalog({
               <Badge variant="outline">Próximamente</Badge>
             </div>
             <CardDescription>
-              Hook de proveedor listo en código (`PROVIDER_NOT_IMPLEMENTED`). Cotización y compra
-              iVoy no están en vivo.
+              El conector ya está preparado en código, pero cotización y compra iVoy aún no están
+              en vivo.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -111,8 +111,8 @@ export function IntegrationsCatalog({
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Facturación ya registra las cargas (`TOP_UP`) para el estado de cuenta. El cobro MP se
-            conectará después, sin cambiar el ledger.
+            Facturación ya registra las cargas de saldo para el estado de cuenta. El cobro con
+            Mercado Pago se conectará después, sin cambiar el ledger.
           </CardContent>
         </Card>
       </div>
