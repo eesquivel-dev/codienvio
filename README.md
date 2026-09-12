@@ -33,7 +33,7 @@ Logotipos oficiales: colocar SVG/PNG aprobados en `public/brand/`. Hasta entonce
 
 `src/lib/providers/types.ts` define `ShippingProvider` (`quoteRates`, `generateLabel`, `track`, `lookupZip`).
 
-- **Envia** (`src/lib/providers/envia.ts`): `POST /ship/rate/`, `POST /ship/generate/`, `POST /ship/generaltrack/` y Geocodes `GET /zipcode/MX/{cp}`.
+- **Envia** (`src/lib/providers/envia.ts`): `POST /ship/rate/` (producción exige `shipment.carrier`; CodiEnvio cotiza en paralelo Estafeta, DHL, FedEx, UPS, Paquetexpress y Redpack y fusiona tarifas), `POST /ship/generate/`, `POST /ship/generaltrack/` y Geocodes `GET /zipcode/MX/{cp}`. El modo simulado no llama a Envia.
 - **iVoy** (`src/lib/providers/ivoy.ts`): stub que responde `501 PROVIDER_NOT_IMPLEMENTED`.
 
 El token JWT de Envia vive solo en el servidor (cifrado en `Settings` o `ENVIA_TOKEN`). El navegador nunca lo recibe.
@@ -80,6 +80,24 @@ API key demo:
 ```
 ce_test_demo_cliente_key_do_not_use_in_prod
 ```
+
+## Portal y admin
+
+Tras `npm run db:seed`, inicia sesión con las cuentas demo.
+
+### Portal (cliente)
+
+- **Inicio**: bienvenida + acción principal **Cotizar envío**.
+- Formulario: origen/destino (C.P., ciudad, estado MX), medidas, peso y valor declarado. El botón **Cargar ejemplo CDMX → MTY** rellena un envío de prueba.
+- Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía.
+- **Mis envíos**: historial con filtros (estado, paquetería, rastreo) y detalle con PDF + rastreo.
+
+### Admin
+
+- **Panel** (`/admin`): ventas, margen, ingreso y envíos recientes. Muestra ceros hasta que exista al menos una guía comprada (usa modo simulado si no hay token).
+- **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
+- **Clientes**: altas, activación y API keys (la key completa solo se muestra una vez).
+- **Envíos**: costo Envia, comisión y precio al cliente.
 
 ## Flujo sandbox Envia
 

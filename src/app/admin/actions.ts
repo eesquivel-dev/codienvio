@@ -7,6 +7,7 @@ import { AppError, errorToResponse } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { getActiveProvider, getSettingsRow, resolveEnviaToken, saveSettings } from "@/lib/settings";
+import { getAdminDashboardStats } from "@/lib/services/shipping";
 import { createClientSchema, settingsSchema } from "@/lib/validations";
 
 function actionError(error: unknown) {
@@ -43,6 +44,11 @@ export async function testEnviaAction() {
   } catch (error) {
     return actionError(error);
   }
+}
+
+export async function getAdminDashboardView() {
+  await requireAdmin();
+  return getAdminDashboardStats();
 }
 
 export async function getAdminSettingsView() {

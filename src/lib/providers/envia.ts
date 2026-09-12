@@ -23,6 +23,18 @@ export type EnviaConfig = {
 
 const GEOCODES_URL = "https://geocodes.envia.com";
 
+/** Domestic MX carriers Envia production requires on `shipment.carrier`. */
+export const ENVIA_MX_CARRIERS = [
+  "estafeta",
+  "dhl",
+  "fedex",
+  "ups",
+  "paquetexpress",
+  "redpack",
+] as const;
+
+export type EnviaMxCarrier = (typeof ENVIA_MX_CARRIERS)[number];
+
 function digits(phone: string): string {
   return phone.replace(/\D/g, "").slice(-10);
 }
@@ -62,19 +74,37 @@ function toEnviaPackages(packages: ProviderPackage[]) {
   }));
 }
 
-export function buildEnviaRatePayload(input: QuoteRatesInput) {
+export function buildEnviaRatePayload(input: QuoteRatesInput, carrier: string) {
   return {
     origin: toEnviaAddress(input.origin),
     destination: toEnviaAddress(input.destination),
     packages: toEnviaPackages(input.packages),
-    shipment: { type: 1 },
+    shipment: { type: 1, carrier },
     settings: { currency: "MXN" },
   };
 }
 
+export function buildEnviaRatePayloads(input: QuoteRatesInput) {
+  return ENVIA_MX_CARRIERS.map((carrier) => buildEnviaRatePayload(input, carrier));
+}
+
+export function mergeEnviaRateLists(lists: ProviderRate[][]): ProviderRate[] {
+  const byKey = new Map<string, ProviderRate>();
+  for (const list of lists) {
+    for (const rate of list) {
+      const key = `${rate.carrier.toLowerCase()}:${rate.service}`;
+      const existing = byKey.get(key);
+      if (!existing || rate.providerCost < existing.providerCost) {
+        byKey.set(key, rate);
+      }
+    }
+  }
+  return [...byKey.values()].sort((a, b) => a.providerCost - b.providerCost);
+}
+
 export function buildEnviaLabelPayload(input: GenerateLabelInput) {
   return {
-    ...buildEnviaRatePayload(input),
+    ...buildEnviaRatePayload(input, input.carrier),
     shipment: {
       type: 1,
       carrier: input.carrier,
@@ -291,9 +321,32 @@ export class EnviaProvider implements ShippingProvider {
 
   async quoteRates(input: QuoteRatesInput): Promise<ProviderRate[]> {
     if (this.config.mock) return mockRates();
-    const payload = await this.request("/ship/rate/", buildEnviaRatePayload(input));
-    const rates = parseEnviaRates(payload);
+
+    const results = await Promise.allSettled(
+      ENVIA_MX_CARRIERS.map(async (carrier) => {
+        const payload = await this.request("/ship/rate/", buildEnviaRatePayload(input, carrier));
+        return parseEnviaRates(payload);
+      }),
+    );
+
+    const lists: ProviderRate[][] = [];
+    const errors: unknown[] = [];
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        lists.push(result.value);
+      } else {
+        errors.push(result.reason);
+      }
+    }
+
+    const rates = mergeEnviaRateLists(lists);
     if (rates.length === 0) {
+      const authError = errors.find(
+        (error) => error instanceof AppError && error.code === "ENVIA_AUTH",
+      );
+      if (authError && errors.length === ENVIA_MX_CARRIERS.length) {
+        throw authError;
+      }
       throw new ProviderError(
         "Envia no devolvió tarifas para esta ruta. Revisa CP, ciudad y estado.",
       );

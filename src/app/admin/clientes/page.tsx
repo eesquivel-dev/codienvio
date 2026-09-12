@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { formatMxn } from "@/lib/money";
 import { ClientsManager } from "@/app/admin/clientes/clients-manager";
-import { PageHeading } from "@/components/page-heading";
+import { PageHeader } from "@/components/page-header";
 
 export default async function ClientsPage() {
   await requireAdmin();
@@ -16,9 +16,10 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeading title="Clientes">
-        Crea cuentas de portal y genera API keys. La key completa solo se muestra una vez.
-      </PageHeading>
+      <PageHeader
+        title="Clientes y API keys"
+        description="Crea cuentas de portal y genera API keys. La key completa solo se muestra una vez; después solo verás el prefijo."
+      />
       <ClientsManager
         clients={clients.map((client) => ({
           id: client.id,

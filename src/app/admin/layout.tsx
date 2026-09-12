@@ -14,7 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         name={session.user.name}
         role="ADMIN"
         items={[
-          { href: "/admin", label: "Configuración" },
+          { href: "/admin", label: "Panel" },
+          { href: "/admin/configuracion", label: "Configuración" },
           { href: "/admin/clientes", label: "Clientes" },
           { href: "/admin/envios", label: "Envíos" },
           { href: "/docs", label: "API" },

@@ -64,6 +64,7 @@
 
 html {
   font-family: var(--font-sans);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -86,4 +87,8 @@ h1 {
 h2,
 h3 {
   font-weight: 600;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--lima) 35%, white);
 }

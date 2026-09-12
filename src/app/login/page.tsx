@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
@@ -40,7 +40,7 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md border-0">
+    <Card className="w-full max-w-md border-0 shadow-lg">
       <CardHeader>
         <div className="mb-3 sm:hidden">
           <BrandMark />
@@ -54,6 +54,7 @@ function LoginForm() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -63,18 +64,23 @@ function LoginForm() {
             <Input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </Field>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? (
+            <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Demo: <code>admin@codienvio.mx</code> / Admin1234! · <code>cliente@demo.mx</code> /
-            Cliente1234!
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Cuentas demo: <code>admin@codienvio.mx</code> / Admin1234! · <code>cliente@demo.mx</code>{" "}
+            / Cliente1234!
           </p>
         </form>
       </CardContent>
@@ -85,10 +91,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <main className="relative flex min-h-screen flex-col bg-navy">
-      <div
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-        aria-hidden
-      >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-navy-claro/50" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-navy-claro/35" />
       </div>

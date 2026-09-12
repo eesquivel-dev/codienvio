@@ -14,7 +14,7 @@ export default async function PortalLayout({ children }: { children: React.React
         name={session.user.name}
         role="CLIENT"
         items={[
-          { href: "/portal", label: "Cotizar" },
+          { href: "/portal", label: "Inicio" },
           { href: "/portal/envios", label: "Mis envíos" },
           { href: "/docs", label: "API" },
         ]}

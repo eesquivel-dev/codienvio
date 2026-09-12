@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CodiEnvio",
-  description: "Revendedor de guías Envia.com para México",
+  description: "Cotiza y compra guías de envío doméstico en México. Precio final en MXN.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

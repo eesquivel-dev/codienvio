@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, KeyRound, BadgePercent } from "lucide-react";
+import { BadgePercent, KeyRound, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export default async function HomePage() {
             <CardTitle className="text-base">Cotiza y compra</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Tarifas en vivo desde Envia sandbox, comisión configurable y PDF + rastreo al comprar.
+            Tarifas en vivo desde Envia, comparación por paquetería y PDF + rastreo al comprar.
           </CardContent>
         </Card>
         <Card>
@@ -68,7 +68,7 @@ export default async function HomePage() {
             <CardTitle className="text-base">Comisión por cliente</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Porcentaje y/o cargo fijo en MXN. Se guardan provider_cost, fee_amount y client_price.
+            Porcentaje y/o cargo fijo en MXN. El costo del proveedor nunca se expone al cliente.
           </CardContent>
         </Card>
       </section>
