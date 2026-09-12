@@ -48,7 +48,7 @@ El token JWT de Envia vive solo en el servidor (cifrado en `Settings` o `ENVIA_T
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 20 or 22 LTS (`.nvmrc` pins 22 for Render / nvm)
 - Docker + Docker Compose (Postgres)
 - Token sandbox de Envia (opcional: modo simulado)
 
