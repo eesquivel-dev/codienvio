@@ -95,12 +95,18 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 - Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía. Si el saldo no alcanza, se muestra el monto faltante y no se llama a Envía.
 - **Mis envíos**: historial con filtros (estado, paquetería, rastreo) y detalle con PDF + rastreo.
 
-### Admin
+### Admin (operador)
+
+Separado del portal de cliente (`/portal`). Navegación:
 
 - **Panel** (`/admin`): ventas, margen, ingreso y envíos recientes. Muestra ceros hasta que exista al menos una guía comprada (usa modo simulado si no hay token).
+- **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger, API keys) y **Cargar saldo**.
+- **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), API keys por cliente, placeholders iVoy y Mercado Pago.
+- **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Se puede marcar un mes como *facturado* (sin CFDI).
+- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente.
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
-- **Clientes**: altas, saldo prepagado (cargar / ajuste con motivo y ledger), activación y API keys (la key completa solo se muestra una vez).
-- **Envíos**: costo Envia, comisión y precio al cliente.
+
+Fuera de alcance todavía: checkout Mercado Pago y timbrado CFDI.
 
 ## Flujo sandbox Envia
 

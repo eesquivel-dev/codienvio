@@ -29,6 +29,11 @@ enum WalletTxnType {
   ADJUSTMENT
 }
 
+enum BillingPeriodStatus {
+  OPEN
+  FACTURADO
+}
+
 model User {
   id                 String              @id @default(cuid())
   email              String              @unique
@@ -37,6 +42,7 @@ model User {
   role               Role
   client             Client?
   walletAdjustments  WalletTransaction[] @relation("WalletCreatedBy")
+  billingPeriods     BillingPeriod[]     @relation("BillingPeriodMarkedBy")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -53,10 +59,11 @@ model Client {
   apiKeys     ApiKey[]
   quotes      Quote[]
   shipments   Shipment[]
-  sales       Sale[]
-  walletTxns  WalletTransaction[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  sales           Sale[]
+  walletTxns      WalletTransaction[]
+  billingPeriods  BillingPeriod[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 }
 
 model ApiKey {
@@ -170,4 +177,23 @@ model WalletTransaction {
   createdAt       DateTime      @default(now())
 
   @@index([clientId, createdAt])
+}
+
+/// Monthly statement stub (no CFDI). Totals always derive from Sale / wallet rows.
+model BillingPeriod {
+  id         String              @id @default(cuid())
+  clientId   String
+  client     Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  year       Int
+  month      Int
+  status     BillingPeriodStatus @default(OPEN)
+  markedAt   DateTime?
+  markedById String?
+  markedBy   User?               @relation("BillingPeriodMarkedBy", fields: [markedById], references: [id], onDelete: SetNull)
+  note       String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@unique([clientId, year, month])
+  @@index([status])
 }

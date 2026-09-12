@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adjustBalanceSchema, quoteRequestSchema } from "@/lib/validations";
+import { adjustBalanceSchema, markBillingPeriodSchema, quoteRequestSchema, updateClientSchema } from "@/lib/validations";
 
 const valid = {
   origin: {
@@ -69,5 +69,32 @@ describe("adjustBalanceSchema", () => {
         note: "x",
       }),
     ).toThrow();
+  });
+});
+
+describe("updateClientSchema", () => {
+  it("acepta override de comisión o vacío (regla global)", () => {
+    expect(
+      updateClientSchema.parse({
+        clientId: "c1",
+        companyName: "Tienda Norte",
+        feePercent: "18",
+        feeFixedMxn: "0",
+      }),
+    ).toMatchObject({ companyName: "Tienda Norte", feePercent: 18, feeFixedMxn: 0 });
+  });
+});
+
+describe("markBillingPeriodSchema", () => {
+  it("acepta marcar un mes como facturado", () => {
+    expect(
+      markBillingPeriodSchema.parse({
+        clientId: "c1",
+        year: "2026",
+        month: "9",
+        status: "FACTURADO",
+        note: "Factura interna septiembre",
+      }),
+    ).toMatchObject({ year: 2026, month: 9, status: "FACTURADO" });
   });
 });

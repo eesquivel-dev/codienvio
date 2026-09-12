@@ -16,13 +16,19 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Panel"
-        description="Resumen de ventas, margen y envíos recientes. El costo de Envia solo se ve aquí."
+        description="Operación reseller: ventas, margen y catálogos de clientes, integraciones y facturación. El costo de Envía solo se ve aquí."
         actions={
           <Button asChild variant="outline">
             <Link href="/admin/configuracion">Ir a configuración</Link>
           </Button>
         }
       />
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <CatalogLink href="/admin/clientes" title="Clientes" hint="Cuentas, comisiones y saldo" />
+        <CatalogLink href="/admin/integraciones" title="Integraciones" hint="Envía, API keys, iVoy y MP" />
+        <CatalogLink href="/admin/facturacion" title="Facturación" hint="Ventas, cargas y estado de cuenta" />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -90,6 +96,18 @@ export default async function AdminDashboardPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function CatalogLink({ href, title, hint }: { href: string; title: string; hint: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-navy/10 bg-white px-4 py-3 transition-colors hover:border-lima hover:bg-lima/10"
+    >
+      <p className="font-semibold text-navy">{title}</p>
+      <p className="type-caption text-muted-foreground">{hint}</p>
+    </Link>
   );
 }
 

@@ -1,27 +1,33 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { asMoney, formatMxn } from "@/lib/money";
+import { getDefaultFeeRule } from "@/lib/settings";
 import { ClientsManager } from "@/app/admin/clientes/clients-manager";
 import { PageHeader } from "@/components/page-header";
 
 export default async function ClientsPage() {
   await requireAdmin();
-  const clients = await prisma.client.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: true,
-      apiKeys: { orderBy: { createdAt: "desc" } },
-      walletTxns: { orderBy: { createdAt: "desc" }, take: 8 },
-    },
-  });
+  const [clients, fees] = await Promise.all([
+    prisma.client.findMany({
+      orderBy: { companyName: "asc" },
+      include: {
+        user: true,
+        apiKeys: { orderBy: { createdAt: "desc" } },
+        walletTxns: { orderBy: { createdAt: "desc" }, take: 8 },
+      },
+    }),
+    getDefaultFeeRule(),
+  ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Clientes y API keys"
-        description="Crea cuentas, carga saldo prepagado y genera API keys. La key completa solo se muestra una vez; después solo verás el prefijo."
+        title="Clientes"
+        description="Catálogo de cuentas reseller: empresa, comisión, saldo prepagado y API keys. La key completa solo se muestra una vez."
       />
       <ClientsManager
+        defaultFeePercent={fees.percent}
+        defaultFeeFixedMxn={fees.fixedMxn}
         clients={clients.map((client) => ({
           id: client.id,
           companyName: client.companyName,
@@ -32,6 +38,7 @@ export default async function ClientsPage() {
           feeFixedMxn: client.feeFixedMxn === null ? null : Number(client.feeFixedMxn),
           balanceMxn: asMoney(client.balanceMxn),
           balanceLabel: formatMxn(asMoney(client.balanceMxn)),
+          createdAt: client.createdAt.toISOString(),
           ledger: client.walletTxns.map((row) => ({
             id: row.id,
             type: row.type,
@@ -45,6 +52,7 @@ export default async function ClientsPage() {
             name: key.name,
             prefix: key.prefix,
             revoked: Boolean(key.revokedAt),
+            lastUsedAt: key.lastUsedAt ? key.lastUsedAt.toISOString() : null,
           })),
         }))}
       />

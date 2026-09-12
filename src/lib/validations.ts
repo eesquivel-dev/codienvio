@@ -59,6 +59,21 @@ export const createClientSchema = z.object({
   feeFixedMxn: z.coerce.number().min(0).max(10000).optional().nullable(),
 });
 
+export const updateClientSchema = z.object({
+  clientId: z.string().trim().min(1),
+  companyName: z.string().trim().min(2).max(80),
+  feePercent: z.coerce.number().min(0).max(100).optional().nullable(),
+  feeFixedMxn: z.coerce.number().min(0).max(10000).optional().nullable(),
+});
+
+export const markBillingPeriodSchema = z.object({
+  clientId: z.string().trim().min(1),
+  year: z.coerce.number().int().min(2020).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
+  status: z.enum(["OPEN", "FACTURADO"]),
+  note: z.string().trim().max(200).optional().or(z.literal("")),
+});
+
 export const adjustBalanceSchema = z.object({
   clientId: z.string().trim().min(1),
   amountMxn: z.coerce.number().positive("El monto debe ser mayor a 0").max(1_000_000),
