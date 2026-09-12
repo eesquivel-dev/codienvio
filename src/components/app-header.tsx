@@ -56,9 +56,18 @@ export function AppHeader({
         </div>
         <div className="flex items-center gap-3">
           {balanceLabel ? (
-            <span className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy">
-              Saldo {balanceLabel}
-            </span>
+            role === "CLIENT" ? (
+              <Link
+                href="/portal/saldo"
+                className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy hover:bg-[#b0c900]"
+              >
+                Saldo {balanceLabel}
+              </Link>
+            ) : (
+              <span className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy">
+                Saldo {balanceLabel}
+              </span>
+            )
           ) : null}
           <span className="hidden max-w-[14rem] truncate text-[0.8125rem] font-medium tracking-[-0.011em] text-white/65 sm:inline">
             {name} · {role === "ADMIN" ? "Admin" : "Cliente"}

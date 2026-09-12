@@ -12,7 +12,7 @@ export default async function BillingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Facturación"
-        description="Ventas (guías) y movimientos de saldo por cliente. Costo Envía y comisión solo se ven aquí. Mercado Pago y CFDI vienen después; hoy puedes marcar el mes como facturado."
+        description="Ventas (guías) y movimientos de saldo por cliente, incluidas recargas de Mercado Pago. Costo Envía y comisión solo se ven aquí. El CFDI de la recarga queda fuera de este alcance."
       />
       <BillingConsole
         events={data.events}

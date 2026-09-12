@@ -81,6 +81,18 @@ export const adjustBalanceSchema = z.object({
   note: z.string().trim().min(2, "Indica un motivo").max(200),
 });
 
+export const TOP_UP_MIN_MXN = 50;
+export const TOP_UP_MAX_MXN = 50_000;
+export const TOP_UP_PRESETS_MXN = [200, 500, 1000, 2000, 5000] as const;
+
+export const walletTopUpSchema = z.object({
+  amountMxn: z.coerce
+    .number({ invalid_type_error: "Indica un monto válido en MXN" })
+    .refine((value) => Number.isFinite(value), "Indica un monto válido en MXN")
+    .refine((value) => value >= TOP_UP_MIN_MXN, `El mínimo de recarga es ${TOP_UP_MIN_MXN} MXN`)
+    .refine((value) => value <= TOP_UP_MAX_MXN, `El máximo de recarga es ${TOP_UP_MAX_MXN} MXN`),
+});
+
 export const settingsSchema = z.object({
   enviaToken: z.string().trim().optional().or(z.literal("")),
   enviaEnvironment: z.enum(["sandbox", "production"]),
