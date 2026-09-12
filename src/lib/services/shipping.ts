@@ -303,6 +303,65 @@ export async function listShipments(clientId: string) {
   return rows.map(toPublicShipment);
 }
 
+export async function getShipmentTracking(clientId: string, shipmentId: string) {
+  const shipment = await prisma.shipment.findFirst({
+    where: { id: shipmentId, clientId },
+  });
+  if (!shipment) {
+    throw new AppError("Envío no encontrado", 404, "SHIPMENT_NOT_FOUND");
+  }
+  if (!shipment.trackingNumber) {
+    return {
+      trackingNumber: "",
+      status: shipment.status === "PURCHASED" ? "Created" : shipment.status,
+      events: [] as Array<{ description: string; date?: string }>,
+    };
+  }
+  const provider = await getActiveProvider();
+  const rows = await provider.track([shipment.trackingNumber]);
+  return (
+    rows[0] ?? {
+      trackingNumber: shipment.trackingNumber,
+      status: shipment.status,
+      events: [],
+    }
+  );
+}
+
+export async function getAdminDashboardStats() {
+  const [saleAgg, purchasedCount, failedCount, activeClients, recent] = await Promise.all([
+    prisma.sale.aggregate({
+      _count: { _all: true },
+      _sum: { feeAmount: true, clientPrice: true, providerCost: true },
+    }),
+    prisma.shipment.count({ where: { status: "PURCHASED" } }),
+    prisma.shipment.count({ where: { status: "FAILED" } }),
+    prisma.client.count({ where: { active: true } }),
+    prisma.shipment.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { client: { include: { user: true } } },
+    }),
+  ]);
+
+  return {
+    salesCount: saleAgg._count._all,
+    marginTotal: asMoney(Number(saleAgg._sum.feeAmount ?? 0)),
+    revenueTotal: asMoney(Number(saleAgg._sum.clientPrice ?? 0)),
+    costTotal: asMoney(Number(saleAgg._sum.providerCost ?? 0)),
+    purchasedCount,
+    failedCount,
+    activeClients,
+    recent: recent.map((shipment) => ({
+      ...toPublicShipment(shipment),
+      providerCost: asMoney(shipment.providerCost),
+      feeAmount: asMoney(shipment.feeAmount),
+      clientName: shipment.client.companyName,
+      clientEmail: shipment.client.user.email,
+    })),
+  };
+}
+
 export async function listAllShipments() {
   const rows = await prisma.shipment.findMany({
     orderBy: { createdAt: "desc" },

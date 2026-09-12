@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createApiKeyAction,
   createClientAction,
   revokeApiKeyAction,
   toggleClientAction,
 } from "@/app/admin/actions";
+import { Field } from "@/components/field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Field } from "@/components/field";
 
 type ClientRow = {
   id: string;
@@ -28,6 +28,16 @@ type ClientRow = {
 export function ClientsManager({ clients }: { clients: ClientRow[] }) {
   const [error, setError] = useState<string | null>(null);
   const [plainKey, setPlainKey] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter((client) =>
+      [client.companyName, client.email, client.name].join(" ").toLowerCase().includes(q),
+    );
+  }, [clients, query]);
 
   async function onCreate(formData: FormData) {
     setError(null);
@@ -56,7 +66,7 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
             <Field label="Correo" htmlFor="email">
               <Input id="email" name="email" type="email" required />
             </Field>
-            <Field label="Contraseña" htmlFor="password">
+            <Field label="Contraseña" htmlFor="password" hint="Mínimo 8 caracteres">
               <Input id="password" name="password" type="password" minLength={8} required />
             </Field>
             <Field label="Comisión % (opcional)" htmlFor="feePercent">
@@ -72,15 +82,51 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
         </CardContent>
       </Card>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {plainKey ? (
-        <p className="rounded-md border bg-amber-50 px-3 py-2 text-sm">
-          API key (cópiala ahora): <code className="break-all font-mono">{plainKey}</code>
+      {error ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {error}
         </p>
       ) : null}
+      {plainKey ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm">
+          <p className="font-medium text-amber-950">API key (cópiala ahora, no se vuelve a mostrar)</p>
+          <code className="mt-1 block break-all font-mono text-amber-950">{plainKey}</code>
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-2"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(plainKey);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              } catch {
+                setCopied(false);
+              }
+            }}
+          >
+            {copied ? "Copiada" : "Copiar"}
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          {filtered.length} de {clients.length} clientes
+        </p>
+        <Input
+          className="sm:max-w-xs"
+          placeholder="Buscar por empresa, nombre o correo"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
 
       <div className="space-y-4">
-        {clients.map((client) => (
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No hay clientes que coincidan.</p>
+        ) : null}
+        {filtered.map((client) => (
           <Card key={client.id}>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -113,7 +159,10 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
                 {" · "}
                 Saldo stub: {client.balanceLabel}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  API keys
+                </p>
                 {client.keys.length === 0 ? (
                   <p className="text-muted-foreground">Sin API keys</p>
                 ) : (
