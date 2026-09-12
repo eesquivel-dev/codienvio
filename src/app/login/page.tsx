@@ -3,8 +3,7 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, Truck } from "lucide-react";
-import { BrandLockup } from "@/components/brand";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,15 +40,13 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md border-0 shadow-lg sm:border">
-      <CardHeader className="space-y-3">
-        <div className="sm:hidden">
-          <BrandLockup subtitle="Guías de envío para México" />
+    <Card className="w-full max-w-md border-0 shadow-lg">
+      <CardHeader>
+        <div className="mb-3 sm:hidden">
+          <BrandMark />
         </div>
-        <CardTitle>Iniciar sesión</CardTitle>
-        <CardDescription>
-          Entra con tu correo de cliente para cotizar, o con una cuenta admin para operar CodiEnvio.
-        </CardDescription>
+        <CardTitle className="text-2xl font-bold">Iniciar sesión</CardTitle>
+        <CardDescription>Usa tu correo de cliente o administrador.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -93,36 +90,26 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between bg-primary px-10 py-12 text-primary-foreground lg:flex">
-        <BrandLockup tone="inverse" subtitle="Guías de envío para México" />
-        <div className="max-w-md space-y-6">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary-foreground/70">
-            México · Envia.com
-          </p>
-          <h1 className="text-4xl font-semibold tracking-tight">Cotiza y compra guías en minutos</h1>
-          <p className="text-base text-primary-foreground/80">
-            Compara paqueterías, elige el mejor precio en MXN y descarga el PDF. Tus clientes nunca
-            ven el costo negociado con Envia.
-          </p>
-          <ul className="space-y-3 text-sm text-primary-foreground/85">
-            <li className="flex items-start gap-2">
-              <Truck className="mt-0.5 h-4 w-4 shrink-0" />
-              Estafeta, DHL, FedEx, UPS, Paquetexpress y Redpack
-            </li>
-            <li className="flex items-start gap-2">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-              Precio final con comisión. Sin exponer el costo del proveedor.
-            </li>
-          </ul>
-        </div>
-        <p className="text-xs text-primary-foreground/60">CodiEnvio · Revendedor de guías domésticas</p>
-      </section>
-      <section className="flex items-center justify-center bg-background px-4 py-10">
+    <main className="relative flex min-h-screen flex-col bg-navy">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-navy-claro/50" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-navy-claro/35" />
+      </div>
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
+        <BrandMark variant="on-dark" />
+        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-lima">
+          Portal de envíos
+        </p>
+      </header>
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <Suspense>
           <LoginForm />
         </Suspense>
-      </section>
+      </div>
+      <footer className="relative z-10 flex items-center justify-between border-t border-white/15 px-6 py-4 text-[10px] uppercase tracking-[0.14em] text-white/45 sm:px-10">
+        <span>CTI Group · CodiEnvio</span>
+        <span>Identidad de marca v1.0</span>
+      </footer>
     </main>
   );
 }

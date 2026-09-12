@@ -88,9 +88,9 @@ export function ClientsManager({ clients }: { clients: ClientRow[] }) {
         </p>
       ) : null}
       {plainKey ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm">
-          <p className="font-medium text-amber-950">API key (cópiala ahora, no se vuelve a mostrar)</p>
-          <code className="mt-1 block break-all font-mono text-amber-950">{plainKey}</code>
+        <div className="rounded-md border border-lima/40 bg-lima/15 px-3 py-3 text-sm text-navy">
+          <p className="font-medium">API key (cópiala ahora, no se vuelve a mostrar)</p>
+          <code className="mt-1 block break-all font-mono">{plainKey}</code>
           <Button
             size="sm"
             variant="outline"

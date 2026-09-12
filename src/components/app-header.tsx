@@ -5,8 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Menu, X } from "lucide-react";
-import { BrandLockup } from "@/components/brand";
-import { Badge } from "@/components/ui/badge";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -31,45 +30,38 @@ export function AppHeader({
   const home = role === "ADMIN" ? "/admin" : "/portal";
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 border-b bg-card/95 backdrop-blur",
-        role === "ADMIN" && "border-b-primary/25",
-      )}
-    >
+    <header className="sticky top-0 z-40 bg-navy text-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
-        <div className="flex min-w-0 items-center gap-6">
-          <Link href={home} className="shrink-0" onClick={() => setOpen(false)}>
-            <BrandLockup subtitle={role === "ADMIN" ? "Administración" : "Portal de clientes"} />
-          </Link>
+        <div className="flex min-w-0 items-center gap-8">
+          <BrandMark href={home} variant="on-dark" size="sm" />
           <nav className="hidden items-center gap-1 md:flex">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground",
-                  isActive(pathname, item.href) && "bg-accent font-medium text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) => {
+              const active = isActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+                    active && "bg-white/10 text-white",
+                  )}
+                >
+                  <span className={cn(active && "border-b-2 border-lima pb-0.5")}>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="max-w-[10rem] truncate text-sm text-muted-foreground">{name}</span>
-            <Badge variant={role === "ADMIN" ? "default" : "secondary"}>
-              {role === "ADMIN" ? "Admin" : "Cliente"}
-            </Badge>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/login" })}>
+        <div className="flex items-center gap-3">
+          <span className="hidden max-w-[14rem] truncate text-sm text-white/65 sm:inline">
+            {name} · {role === "ADMIN" ? "Admin" : "Cliente"}
+          </span>
+          <Button variant="inverse" size="sm" onClick={() => signOut({ callbackUrl: "/login" })}>
             Salir
           </Button>
           <Button
             type="button"
-            variant="ghost"
+            variant="inverse"
             size="icon"
             className="md:hidden"
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
@@ -80,24 +72,28 @@ export function AppHeader({
         </div>
       </div>
       {open ? (
-        <nav className="border-t bg-card px-4 py-3 md:hidden">
+        <nav className="border-t border-white/15 bg-navy px-4 py-3 md:hidden">
           <div className="mx-auto flex max-w-6xl flex-col gap-1">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground",
-                  isActive(pathname, item.href) && "bg-accent font-medium text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) => {
+              const active = isActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white",
+                    active && "bg-white/10 font-medium text-white",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         </nav>
       ) : null}
+      <div className="h-0.5 bg-lima" aria-hidden />
     </header>
   );
 }

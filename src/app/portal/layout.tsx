@@ -9,7 +9,7 @@ export default async function PortalLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-papel">
       <AppHeader
         name={session.user.name}
         role="CLIENT"

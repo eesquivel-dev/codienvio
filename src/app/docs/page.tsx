@@ -1,47 +1,58 @@
 import Link from "next/link";
-import { BrandLockup } from "@/components/brand";
+import { BrandMark } from "@/components/brand-mark";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DocsPage() {
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-4 py-12">
-      <div>
-        <Link href="/" className="inline-block">
-          <BrandLockup subtitle="Documentación API" />
-        </Link>
-        <h1 className="mt-2 text-3xl font-semibold">API pública v1</h1>
-        <p className="mt-2 text-muted-foreground">
-          Autenticación con API key por cliente. El token de Envia nunca viaja al cliente. Las
-          respuestas solo incluyen <code>price</code> (MXN), nunca el costo del proveedor.
-        </p>
-        <p className="mt-2 text-sm">
-          OpenAPI:{" "}
-          <a className="underline" href="/openapi.yaml">
-            /openapi.yaml
-          </a>
-        </p>
-      </div>
+    <main className="min-h-screen bg-papel">
+      <header className="bg-navy">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
+          <BrandMark href="/" variant="on-dark" size="sm" />
+          <Link href="/login" className="text-sm font-medium text-lima hover:underline">
+            Iniciar sesión
+          </Link>
+        </div>
+        <div className="h-0.5 bg-lima" aria-hidden />
+      </header>
+      <div className="mx-auto max-w-3xl space-y-8 px-4 py-12">
+        <div>
+          <Link href="/" className="text-sm text-muted-foreground hover:underline">
+            ← CodiEnvio
+          </Link>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy">API pública v1</h1>
+          <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
+          <p className="mt-2 text-muted-foreground">
+            Autenticación con API key por cliente. El token de Envia nunca viaja al cliente. Las
+            respuestas solo incluyen <code>price</code> (MXN), nunca el costo del proveedor.
+          </p>
+          <p className="mt-2 text-sm">
+            OpenAPI:{" "}
+            <a className="underline" href="/openapi.yaml">
+              /openapi.yaml
+            </a>
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Autenticación</CardTitle>
-          <CardDescription>El admin genera la key en Clientes.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="overflow-x-auto rounded-md bg-slate-950 p-4 text-xs text-slate-100">
-            {`Authorization: Bearer ce_live_...`}
-          </pre>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Autenticación</CardTitle>
+            <CardDescription>El admin genera la key en Clientes.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
+              {`Authorization: Bearer ce_live_...`}
+            </pre>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>POST /v1/rates</CardTitle>
-          <CardDescription>Cotiza un envío doméstico MX y persiste la cotización.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="overflow-x-auto rounded-md bg-slate-950 p-4 text-xs text-slate-100">
-            {`curl -X POST http://localhost:3000/v1/rates \\
+        <Card>
+          <CardHeader>
+            <CardTitle>POST /v1/rates</CardTitle>
+            <CardDescription>Cotiza un envío doméstico MX y persiste la cotización.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
+              {`curl -X POST http://localhost:3000/v1/rates \\
   -H "Authorization: Bearer $CODENVIO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -75,36 +86,37 @@ export default function DocsPage() {
       "declaredValueMxn": 450
     }]
   }'`}
-          </pre>
-        </CardContent>
-      </Card>
+            </pre>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>POST /v1/shipments</CardTitle>
-          <CardDescription>Compra la guía a partir de quoteId + rateId.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="overflow-x-auto rounded-md bg-slate-950 p-4 text-xs text-slate-100">
-            {`curl -X POST http://localhost:3000/v1/shipments \\
+        <Card>
+          <CardHeader>
+            <CardTitle>POST /v1/shipments</CardTitle>
+            <CardDescription>Compra la guía a partir de quoteId + rateId.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
+              {`curl -X POST http://localhost:3000/v1/shipments \\
   -H "Authorization: Bearer $CODENVIO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"quoteId":"...", "rateId":"..."}'`}
-          </pre>
-        </CardContent>
-      </Card>
+            </pre>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>GET /v1/shipments/:id</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <pre className="overflow-x-auto rounded-md bg-slate-950 p-4 text-xs text-slate-100">
-            {`curl http://localhost:3000/v1/shipments/SHIPMENT_ID \\
+        <Card>
+          <CardHeader>
+            <CardTitle>GET /v1/shipments/:id</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
+              {`curl http://localhost:3000/v1/shipments/SHIPMENT_ID \\
   -H "Authorization: Bearer $CODENVIO_API_KEY"`}
-          </pre>
-        </CardContent>
-      </Card>
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }

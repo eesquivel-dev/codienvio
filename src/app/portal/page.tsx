@@ -16,12 +16,13 @@ export default async function PortalPage() {
 
   return (
     <div className="space-y-8">
-      <section className="overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
-        <p className="text-sm font-medium text-primary">Portal CodiEnvio</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+      <section className="overflow-hidden rounded-lg border border-navy/10 bg-card p-6 shadow-sm sm:p-8">
+        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-lima">Portal CodiEnvio</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy">
           Hola{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
         </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
+        <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
+        <p className="mt-3 max-w-2xl text-muted-foreground">
           Cotiza un envío doméstico, compara paqueterías y compra la guía. El precio es final en
           MXN; el costo de Envia no se muestra.
         </p>
@@ -45,7 +46,7 @@ export default async function PortalPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold tabular-nums">{purchased.length}</p>
+              <p className="text-2xl font-semibold tabular-nums text-navy">{purchased.length}</p>
             </CardContent>
           </Card>
           <Card className="border-dashed shadow-none">
@@ -69,7 +70,7 @@ export default async function PortalPage() {
           <ul className="mt-4 space-y-2 text-sm">
             {recent.map((item) => (
               <li key={item.id}>
-                <Link className="text-primary hover:underline" href={`/portal/envios/${item.id}`}>
+                <Link className="font-medium text-navy hover:underline" href={`/portal/envios/${item.id}`}>
                   {item.trackingNumber ?? item.id} · {formatMxn(item.price)}
                 </Link>
               </li>
@@ -80,8 +81,9 @@ export default async function PortalPage() {
 
       <section id="cotizar" className="scroll-mt-24 space-y-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Cotizar envío</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-navy">Cotizar envío</h2>
+          <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
+          <p className="mt-2 text-sm text-muted-foreground">
             Completa origen, destino y medidas. Si solo quieres probar, usa el ejemplo CDMX → MTY.
           </p>
         </div>

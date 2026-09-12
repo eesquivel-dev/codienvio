@@ -81,7 +81,7 @@ export default async function AdminDashboardPage() {
                   <span className="tabular-nums text-muted-foreground">
                     margen {formatMxn(item.feeAmount)}
                   </span>
-                  <span className="font-semibold tabular-nums">{formatMxn(item.price)}</span>
+                  <span className="font-semibold tabular-nums text-navy">{formatMxn(item.price)}</span>
                   <StatusBadge status={item.status} />
                 </div>
               </div>
@@ -113,7 +113,7 @@ function StatCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold tabular-nums">{value}</p>
+        <p className="text-2xl font-semibold tabular-nums text-navy">{value}</p>
         <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>

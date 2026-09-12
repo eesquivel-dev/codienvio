@@ -147,7 +147,7 @@ export function SettingsForm({ settings }: { settings: SettingsView }) {
           </p>
         ) : null}
         {message ? (
-          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <p className="rounded-md border border-lima/40 bg-lima/15 px-3 py-2 text-sm text-navy">
             {message}
           </p>
         ) : null}

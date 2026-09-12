@@ -333,7 +333,7 @@ export function QuoteForm() {
       ) : null}
 
       {boughtId ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="rounded-md border border-lima/40 bg-lima/15 px-3 py-2 text-sm text-navy">
           Guía comprada.{" "}
           <Link className="font-medium underline" href={`/portal/envios/${boughtId}`}>
             Ver rastreo y descargar PDF
@@ -414,14 +414,14 @@ export function QuoteForm() {
                     onClick={() => setSelectedRateId(rate.id)}
                     className={cn(
                       "flex w-full flex-col gap-3 rounded-xl border bg-background p-4 text-left transition-colors sm:flex-row sm:items-center sm:justify-between",
-                      selected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/40",
+                      selected ? "border-lima ring-2 ring-lima/35" : "hover:border-navy/30",
                     )}
                   >
                     <div className="flex min-w-0 items-start gap-3">
                       <span
                         className={cn(
                           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
-                          selected ? "border-primary bg-primary text-primary-foreground" : "border-input",
+                          selected ? "border-navy bg-navy text-white" : "border-input",
                         )}
                       >
                         {selected ? <Check className="h-3 w-3" /> : null}
@@ -443,7 +443,7 @@ export function QuoteForm() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Precio</p>
-                        <p className="text-lg font-semibold tabular-nums">{formatMxn(rate.price)}</p>
+                        <p className="text-lg font-semibold tabular-nums text-navy">{formatMxn(rate.price)}</p>
                       </div>
                     </div>
                   </button>

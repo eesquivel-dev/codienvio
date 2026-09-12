@@ -1,23 +1,32 @@
 @import "tailwindcss";
 
+/* CTI Group Brand Identity Manual v1.0 — July 2026 */
 :root {
-  --background: #f3f7f6;
-  --foreground: #10221d;
-  --card: #ffffff;
-  --card-foreground: #10221d;
-  --primary: #0f766e;
-  --primary-foreground: #f8fffd;
-  --secondary: #e6efec;
-  --secondary-foreground: #1c332e;
-  --muted: #e8eeec;
-  --muted-foreground: #5a6c67;
-  --accent: #d7ebe6;
-  --accent-foreground: #10221d;
+  --navy: #0b1b4b;
+  --navy-claro: #1f3e8c;
+  --lima: #c4e000;
+  --lima-hover: #b0c900;
+  --gris-azulado: #8fa0b8;
+  --gris-papel: #f6f7f9;
+  --blanco: #ffffff;
+
+  --background: var(--gris-papel);
+  --foreground: var(--navy);
+  --card: var(--blanco);
+  --card-foreground: var(--navy);
+  --primary: var(--navy);
+  --primary-foreground: var(--blanco);
+  --secondary: #e8edf4;
+  --secondary-foreground: var(--navy);
+  --muted: #e8edf4;
+  --muted-foreground: var(--gris-azulado);
+  --accent: var(--lima);
+  --accent-foreground: var(--navy);
   --destructive: #b42318;
-  --border: #d3dfdb;
-  --input: #d3dfdb;
-  --ring: #0f766e;
-  --radius: 0.7rem;
+  --border: #d5dce6;
+  --input: #d5dce6;
+  --ring: var(--navy-claro);
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -37,11 +46,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-navy: var(--navy);
+  --color-navy-claro: var(--navy-claro);
+  --color-lima: var(--lima);
+  --color-papel: var(--gris-papel);
+  --color-azul-gris: var(--gris-azulado);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins), Arial, "Liberation Sans", ui-sans-serif, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 * {
@@ -49,15 +63,32 @@
 }
 
 html {
+  font-family: var(--font-sans);
   scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 700;
+}
+
+h2,
+h3 {
+  font-weight: 600;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--primary) 22%, white);
+  background: color-mix(in srgb, var(--lima) 35%, white);
 }

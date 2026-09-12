@@ -10,7 +10,24 @@ Fuera de alcance: pagos reales, iVoy en vivo y monedas distintas a MXN. Hay un s
 - PostgreSQL + Prisma
 - Tailwind CSS + componentes estilo shadcn/ui
 - NextAuth (correo/contraseña) y API keys Bearer
-- UI en **es-MX**
+- UI en **es-MX**, identidad visual **CTI Group** (Manual v1.0)
+
+## Identidad de marca
+
+Paleta y tipografía según el *Manual de Identidad Corporativa CTI Group v1.0* (julio 2026):
+
+| Token | Hex | Uso |
+| ----- | --- | --- |
+| Navy CTI | `#0B1B4B` | Dominante (encabezados, texto) |
+| Lima CTI | `#C4E000` | Acento (CTAs, datos clave, marca) |
+| Navy claro | `#1F3E8C` | Fondos y gráficos |
+| Gris azulado | `#8FA0B8` | Texto secundario |
+| Gris papel | `#F6F7F9` | Fondos alternos |
+| Blanco | `#FFFFFF` | Base |
+
+Tipografía: **Poppins** (Bold / SemiBold / Medium / Regular). Fallback Arial / Liberation Sans.
+
+Logotipos oficiales: colocar SVG/PNG aprobados en `public/brand/`. Hasta entonces se usa un wordmark de texto **CodiEnvio** + subtítulo CTI Group (sin inventar el isotipo).
 
 ## Arquitectura de proveedores
 
