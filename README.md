@@ -2,7 +2,7 @@
 
 Revendedor de guías de envío para **México**, integrado con **Envia.com**. Edgar cotiza y compra con su cuenta negociada; los clientes ven solo el **precio final** (comisión incluida) en el portal web o la API REST.
 
-Fuera de alcance: pagos reales, iVoy en vivo y monedas distintas a MXN. Hay un stub de saldo por cliente y un hook de proveedor `iVoy` para más adelante.
+Fuera de alcance: pasarela de pago para clientes (Stripe, etc.), recarga automática del monedero Envía, iVoy en vivo y monedas distintas a MXN. Cada cliente tiene **saldo prepagado en MXN**; el admin lo carga o ajusta a mano. CodiEnvio cobra `clientPrice` de ese saldo al comprar una guía y paga a Envía desde el monedero de la plataforma. Hay un hook de proveedor `iVoy` para más adelante.
 
 ## Stack
 
@@ -90,15 +90,16 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 ### Portal (cliente)
 
 - **Inicio**: bienvenida + acción principal **Cotizar envío**.
+- Saldo prepagado visible en el encabezado y en la cotización. **Comprar guía** exige saldo ≥ precio de venta.
 - Formulario: origen/destino (C.P., ciudad, estado MX), medidas, peso y valor declarado. El botón **Cargar ejemplo CDMX → MTY** rellena un envío de prueba.
-- Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía.
+- Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía. Si el saldo no alcanza, se muestra el monto faltante y no se llama a Envía.
 - **Mis envíos**: historial con filtros (estado, paquetería, rastreo) y detalle con PDF + rastreo.
 
 ### Admin
 
 - **Panel** (`/admin`): ventas, margen, ingreso y envíos recientes. Muestra ceros hasta que exista al menos una guía comprada (usa modo simulado si no hay token).
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
-- **Clientes**: altas, activación y API keys (la key completa solo se muestra una vez).
+- **Clientes**: altas, saldo prepagado (cargar / ajuste con motivo y ledger), activación y API keys (la key completa solo se muestra una vez).
 - **Envíos**: costo Envia, comisión y precio al cliente.
 
 ## Flujo sandbox Envia

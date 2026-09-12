@@ -12,7 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { carrierLabel, formatTimeMx } from "@/lib/format";
 import { MX_STATES } from "@/lib/mexico";
-import { formatMxn } from "@/lib/money";
+import { asMoney, formatMxn } from "@/lib/money";
+import { canAfford, insufficientBalanceMessage } from "@/lib/wallet-copy";
 import type { ZipLookup } from "@/lib/providers/types";
 import { cn } from "@/lib/utils";
 import { quoteRequestSchema } from "@/lib/validations";
@@ -93,7 +94,8 @@ function fieldError(errors: Record<string, string>, ...keys: string[]) {
   return keys.map((key) => errors[key]).find(Boolean);
 }
 
-export function QuoteForm() {
+export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: number }) {
+  const [balanceMxn, setBalanceMxn] = useState(initialBalanceMxn);
   const [origin, setOrigin] = useState<AddressState>(emptyAddress("CX"));
   const [destination, setDestination] = useState<AddressState>(emptyAddress("NL"));
   const [pkg, setPkg] = useState({
@@ -135,6 +137,11 @@ export function QuoteForm() {
 
   const selectedRate = rates.find((rate) => rate.id === selectedRateId) ?? null;
   const cheapestId = rates[0]?.id;
+  const selectedAffordable = selectedRate ? canAfford(balanceMxn, selectedRate.price) : false;
+
+  useEffect(() => {
+    setBalanceMxn(initialBalanceMxn);
+  }, [initialBalanceMxn]);
 
   function validateLocal() {
     const parsed = quoteRequestSchema.safeParse(payload);
@@ -185,7 +192,11 @@ export function QuoteForm() {
   }
 
   async function onBuy() {
-    if (!quoteId || !selectedRateId) return;
+    if (!quoteId || !selectedRateId || !selectedRate) return;
+    if (!canAfford(balanceMxn, selectedRate.price)) {
+      setError(insufficientBalanceMessage(balanceMxn, selectedRate.price));
+      return;
+    }
     setBuying(true);
     setError(null);
     try {
@@ -195,6 +206,7 @@ export function QuoteForm() {
         return;
       }
       setBoughtId(result.shipment.id);
+      setBalanceMxn(asMoney(result.balanceMxn));
     } finally {
       setBuying(false);
     }
@@ -202,6 +214,19 @@ export function QuoteForm() {
 
   return (
     <form onSubmit={onQuote} className="space-y-6">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm",
+          balanceMxn > 0 ? "border-lima/40 bg-lima/15 text-navy" : "border-destructive/30 bg-destructive/5 text-destructive",
+        )}
+      >
+        <span>
+          Saldo disponible: <strong className="tabular-nums">{formatMxn(balanceMxn)}</strong>
+        </span>
+        {balanceMxn <= 0 ? (
+          <span>Pide a tu administrador que cargue saldo para comprar guías.</span>
+        ) : null}
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
         <AddressCard
           title="Origen"
@@ -389,7 +414,7 @@ export function QuoteForm() {
             <CardTitle>Compara tarifas</CardTitle>
             <CardDescription>
               Precio final en MXN, de menor a mayor. Incluye comisión; el costo de Envia no se
-              muestra.
+              muestra. Se cobra de tu saldo prepagado ({formatMxn(balanceMxn)}).
               {expiresAt ? ` Vigente hasta las ${formatTimeMx(expiresAt)}.` : null}
             </CardDescription>
           </CardHeader>
@@ -423,6 +448,9 @@ export function QuoteForm() {
                           {rate.id === cheapestId ? (
                             <Badge variant="success">Mejor precio</Badge>
                           ) : null}
+                          {!canAfford(balanceMxn, rate.price) ? (
+                            <Badge variant="warning">Saldo insuficiente</Badge>
+                          ) : null}
                         </div>
                         <p className="text-sm text-muted-foreground">{rate.serviceName}</p>
                       </div>
@@ -449,11 +477,20 @@ export function QuoteForm() {
                     ? `${carrierLabel(selectedRate.carrier)} · ${selectedRate.serviceName} · ${formatMxn(selectedRate.price)}`
                     : "Elige una tarifa"}
                 </p>
+                {boughtId ? null : selectedRate && !selectedAffordable ? (
+                  <p className="mt-1 text-sm text-destructive">
+                    {insufficientBalanceMessage(balanceMxn, selectedRate.price)}
+                  </p>
+                ) : selectedRate ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Quedarán {formatMxn(asMoney(balanceMxn - selectedRate.price))} después de comprar.
+                  </p>
+                ) : null}
               </div>
               <Button
                 type="button"
                 size="lg"
-                disabled={!selectedRate || buying || Boolean(boughtId)}
+                disabled={!selectedRate || buying || Boolean(boughtId) || !selectedAffordable}
                 onClick={onBuy}
               >
                 {buying ? "Comprando…" : "Comprar guía"}

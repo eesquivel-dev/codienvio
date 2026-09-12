@@ -1,0 +1,42 @@
+import { AppError } from "@/lib/errors";
+import { asMoney, formatMxn } from "@/lib/money";
+
+export type WalletTxnType = "TOP_UP" | "PURCHASE" | "ADJUSTMENT";
+
+export type WalletLedgerRow = {
+  id: string;
+  type: WalletTxnType;
+  amountMxn: number;
+  note: string | null;
+  shipmentId: string | null;
+  createdAt: string;
+};
+
+export function canAfford(balanceMxn: number, priceMxn: number): boolean {
+  return asMoney(balanceMxn) >= asMoney(priceMxn);
+}
+
+export function insufficientBalanceMessage(balanceMxn: number, requiredMxn: number): string {
+  return `Saldo insuficiente. Tu saldo es ${formatMxn(balanceMxn)}; esta guía cuesta ${formatMxn(requiredMxn)}.`;
+}
+
+export function insufficientBalanceError(balanceMxn: number, requiredMxn: number): AppError {
+  return new AppError(insufficientBalanceMessage(balanceMxn, requiredMxn), 402, "INSUFFICIENT_BALANCE", {
+    balanceMxn: asMoney(balanceMxn),
+    requiredMxn: asMoney(requiredMxn),
+  });
+}
+
+export function assertSufficientBalance(balanceMxn: number, requiredMxn: number): void {
+  const balance = asMoney(balanceMxn);
+  const required = asMoney(requiredMxn);
+  if (!canAfford(balance, required)) {
+    throw insufficientBalanceError(balance, required);
+  }
+}
+
+export function walletTxnTypeLabel(type: WalletTxnType): string {
+  if (type === "TOP_UP") return "Carga";
+  if (type === "PURCHASE") return "Compra de guía";
+  return "Ajuste";
+}

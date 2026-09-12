@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { quoteRequestSchema } from "@/lib/validations";
+import { adjustBalanceSchema, quoteRequestSchema } from "@/lib/validations";
 
 const valid = {
   origin: {
@@ -43,6 +43,30 @@ describe("quoteRequestSchema", () => {
       quoteRequestSchema.parse({
         ...valid,
         destination: { ...valid.destination, postalCode: "6406" },
+      }),
+    ).toThrow();
+  });
+});
+
+describe("adjustBalanceSchema", () => {
+  it("acepta carga y débito con motivo", () => {
+    expect(
+      adjustBalanceSchema.parse({
+        clientId: "c1",
+        amountMxn: "500.50",
+        direction: "credit",
+        note: "Transferencia SPEI",
+      }),
+    ).toMatchObject({ amountMxn: 500.5, direction: "credit" });
+  });
+
+  it("exige motivo y monto positivo", () => {
+    expect(() =>
+      adjustBalanceSchema.parse({
+        clientId: "c1",
+        amountMxn: 0,
+        direction: "debit",
+        note: "x",
       }),
     ).toThrow();
   });

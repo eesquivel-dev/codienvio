@@ -93,7 +93,10 @@ export default function DocsPage() {
         <Card>
           <CardHeader>
             <CardTitle>POST /v1/shipments</CardTitle>
-            <CardDescription>Compra la guía a partir de quoteId + rateId.</CardDescription>
+            <CardDescription>
+              Compra la guía a partir de quoteId + rateId. Se cobra el precio de venta del saldo
+              prepagado del cliente. Si no alcanza, responde 402 y no llama a Envía.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">

@@ -59,6 +59,13 @@ export const createClientSchema = z.object({
   feeFixedMxn: z.coerce.number().min(0).max(10000).optional().nullable(),
 });
 
+export const adjustBalanceSchema = z.object({
+  clientId: z.string().trim().min(1),
+  amountMxn: z.coerce.number().positive("El monto debe ser mayor a 0").max(1_000_000),
+  direction: z.enum(["credit", "debit"]),
+  note: z.string().trim().min(2, "Indica un motivo").max(200),
+});
+
 export const settingsSchema = z.object({
   enviaToken: z.string().trim().optional().or(z.literal("")),
   enviaEnvironment: z.enum(["sandbox", "production"]),

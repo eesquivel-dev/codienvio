@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, History, Package } from "lucide-react";
+import { ArrowRight, History, Package, Wallet } from "lucide-react";
 import { QuoteForm } from "@/components/quote-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +7,14 @@ import { requireClient } from "@/lib/auth";
 import { formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
 import { listShipments } from "@/lib/services/shipping";
+import { getClientWallet } from "@/lib/wallet";
 
 export default async function PortalPage() {
   const session = await requireClient();
-  const shipments = await listShipments(session.user.clientId!);
+  const [shipments, wallet] = await Promise.all([
+    listShipments(session.user.clientId!),
+    getClientWallet(session.user.clientId!),
+  ]);
   const purchased = shipments.filter((item) => item.status === "PURCHASED");
   const recent = purchased.slice(0, 3);
 
@@ -37,7 +41,20 @@ export default async function PortalPage() {
             <Link href="/portal/envios">Ver historial</Link>
           </Button>
         </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <Card className="border-dashed shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
+                <Wallet className="h-4 w-4" />
+                Saldo prepagado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold tracking-[-0.03em] tabular-nums text-navy">
+                {formatMxn(wallet.balanceMxn)}
+              </p>
+            </CardContent>
+          </Card>
           <Card className="border-dashed shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
@@ -87,7 +104,7 @@ export default async function PortalPage() {
             Completa origen, destino y medidas. Si solo quieres probar, usa el ejemplo CDMX → MTY.
           </p>
         </div>
-        <QuoteForm />
+        <QuoteForm balanceMxn={wallet.balanceMxn} />
       </section>
     </div>
   );
