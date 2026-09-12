@@ -39,6 +39,9 @@ async function enrichAddress(address: AddressInput) {
     ...address,
     city: address.city || geo.city,
     state: address.state || geo.state,
+    district:
+      address.district ||
+      (geo.suburbs.length === 1 ? geo.suburbs[0] : address.district),
   };
 }
 

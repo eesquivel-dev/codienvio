@@ -42,11 +42,12 @@ export const MX_STATE_ALIASES: Record<string, string> = {
   MEX: "EM",
   JC: "JA",
   JAL: "JA",
+  NLE: "NL",
 };
 
 export function normalizeMxState(code: string): string {
-  const upper = code.trim().toUpperCase();
-  return MX_STATE_ALIASES[upper] ?? upper;
+  const raw = code.trim().toUpperCase().replace(/^MX-/, "");
+  return MX_STATE_ALIASES[raw] ?? raw;
 }
 
 export function isMxState(code: string): boolean {

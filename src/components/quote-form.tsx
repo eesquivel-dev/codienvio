@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Package, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Loader2, Package, Sparkles } from "lucide-react";
 import { buyAction, quoteAction } from "@/app/portal/actions";
 import { Field } from "@/components/field";
 import { NativeSelect } from "@/components/native-select";
@@ -13,8 +13,15 @@ import { Input } from "@/components/ui/input";
 import { carrierLabel, formatTimeMx } from "@/lib/format";
 import { MX_STATES } from "@/lib/mexico";
 import { formatMxn } from "@/lib/money";
+import type { ZipLookup } from "@/lib/providers/types";
 import { cn } from "@/lib/utils";
 import { quoteRequestSchema } from "@/lib/validations";
+import {
+  applyZipLookup,
+  isCompletePostalCode,
+  zipFieldMessage,
+  type ZipFieldStatus,
+} from "@/lib/zip-address";
 
 type AddressState = {
   name: string;
@@ -61,7 +68,7 @@ const demoOrigin: AddressState = {
   phone: "5551234567",
   street: "Av. Insurgentes Sur",
   number: "1647",
-  district: "San José Insurgentes",
+  district: "Insurgentes Mixcoac",
   city: "Ciudad de México",
   state: "CX",
   postalCode: "03920",
@@ -129,42 +136,28 @@ export function QuoteForm() {
   const selectedRate = rates.find((rate) => rate.id === selectedRateId) ?? null;
   const cheapestId = rates[0]?.id;
 
-  async function fillFromZip(
-    postalCode: string,
-    current: AddressState,
-    setter: (next: AddressState) => void,
-  ) {
-    setter({ ...current, postalCode });
-    if (!/^\d{5}$/.test(postalCode)) return;
-    try {
-      const res = await fetch(`/api/geo/zip?code=${postalCode}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as { city?: string; state?: string };
-      setter({
-        ...current,
-        postalCode,
-        city: data.city || current.city,
-        state: data.state || current.state,
-      });
-    } catch {
-      /* ignore lookup failures */
-    }
-  }
-
   function validateLocal() {
     const parsed = quoteRequestSchema.safeParse(payload);
-    if (parsed.success) {
-      setFieldErrors({});
-      return true;
-    }
     const next: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const path = issue.path.join(".");
-      if (!next[path]) next[path] = issue.message;
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const path = issue.path.join(".");
+        if (!next[path]) next[path] = issue.message;
+      }
     }
-    setFieldErrors(next);
-    setError("Revisa origen, destino y el paquete. Los campos marcados son obligatorios.");
-    return false;
+    if (!origin.district.trim()) {
+      next["origin.district"] = "Selecciona una colonia";
+    }
+    if (!destination.district.trim()) {
+      next["destination.district"] = "Selecciona una colonia";
+    }
+    if (Object.keys(next).length > 0) {
+      setFieldErrors(next);
+      setError("Revisa origen, destino y el paquete. Los campos marcados son obligatorios.");
+      return false;
+    }
+    setFieldErrors({});
+    return true;
   }
 
   async function onQuote(event: React.FormEvent) {
@@ -212,24 +205,22 @@ export function QuoteForm() {
       <div className="grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-start">
         <AddressCard
           title="Origen"
-          description="Quién envía · C.P., ciudad y estado MX"
+          description="Quién envía · C.P. y colonia, como en las paqueterías MX"
           value={origin}
           prefix="origin"
           errors={fieldErrors}
           onChange={setOrigin}
-          onZip={(code) => fillFromZip(code, origin, setOrigin)}
         />
         <div className="hidden pt-16 lg:flex">
           <ArrowRight className="h-5 w-5 text-muted-foreground" aria-hidden />
         </div>
         <AddressCard
           title="Destino"
-          description="Quién recibe · C.P., ciudad y estado MX"
+          description="Quién recibe · C.P. y colonia, como en las paqueterías MX"
           value={destination}
           prefix="destination"
           errors={fieldErrors}
           onChange={setDestination}
-          onZip={(code) => fillFromZip(code, destination, setDestination)}
         />
       </div>
 
@@ -482,16 +473,82 @@ function AddressCard({
   prefix,
   errors,
   onChange,
-  onZip,
 }: {
   title: string;
   description: string;
   value: AddressState;
   prefix: "origin" | "destination";
   errors: Record<string, string>;
-  onChange: (next: AddressState) => void;
-  onZip: (code: string) => void;
+  onChange: Dispatch<SetStateAction<AddressState>>;
 }) {
+  const [zipStatus, setZipStatus] = useState<ZipFieldStatus>("idle");
+  const [suburbs, setSuburbs] = useState<string[]>([]);
+  const [municipality, setMunicipality] = useState<string>("");
+  const [coloniaFilter, setColoniaFilter] = useState("");
+
+  useEffect(() => {
+    const code = value.postalCode;
+    if (!isCompletePostalCode(code)) {
+      setZipStatus("idle");
+      setSuburbs([]);
+      setMunicipality("");
+      setColoniaFilter("");
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+    setZipStatus("loading");
+
+    void (async () => {
+      try {
+        const res = await fetch(`/api/geo/zip?code=${code}`, { signal: controller.signal });
+        if (cancelled) return;
+        if (res.status === 404) {
+          setZipStatus("not_found");
+          setSuburbs([]);
+          setMunicipality("");
+          onChange((prev) =>
+            prev.postalCode === code ? { ...prev, city: "", district: "" } : prev,
+          );
+          return;
+        }
+        if (!res.ok) {
+          setZipStatus("error");
+          setSuburbs([]);
+          return;
+        }
+        const data = (await res.json()) as ZipLookup;
+        if (cancelled) return;
+        const nextSuburbs = Array.isArray(data.suburbs) ? data.suburbs : [];
+        setSuburbs(nextSuburbs);
+        setMunicipality(data.municipality ?? "");
+        setColoniaFilter("");
+        setZipStatus("found");
+        onChange((prev) =>
+          prev.postalCode === code ? applyZipLookup(prev, { ...data, suburbs: nextSuburbs }) : prev,
+        );
+      } catch (error) {
+        if (cancelled || (error instanceof DOMException && error.name === "AbortError")) return;
+        setZipStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [value.postalCode, onChange]);
+
+  const zipMessage = zipFieldMessage(zipStatus, suburbs.length);
+  const geoLocked = zipStatus === "found";
+  const useColoniaSelect = zipStatus === "found" && suburbs.length > 0;
+  const visibleSuburbs =
+    coloniaFilter.trim().length === 0
+      ? suburbs
+      : suburbs.filter((name) => name.toLocaleLowerCase("es-MX").includes(coloniaFilter.trim().toLocaleLowerCase("es-MX")));
+  const coloniaError = fieldError(errors, `${prefix}.district`);
+
   return (
     <Card>
       <CardHeader>
@@ -505,37 +562,112 @@ function AddressCard({
         <Field
           label="C.P."
           htmlFor={`${prefix}-zip`}
-          hint="5 dígitos. Completa ciudad y estado al escribir."
-          error={fieldError(errors, `${prefix}.postalCode`)}
+          hint={zipMessage.hint}
+          error={zipMessage.error || fieldError(errors, `${prefix}.postalCode`)}
         >
-          <Input
-            id={`${prefix}-zip`}
-            inputMode="numeric"
-            autoComplete="postal-code"
-            value={value.postalCode}
-            maxLength={5}
-            placeholder="03920"
-            onChange={(e) => onZip(e.target.value.replace(/\D/g, "").slice(0, 5))}
-          />
+          <div className="relative">
+            <Input
+              id={`${prefix}-zip`}
+              inputMode="numeric"
+              autoComplete="postal-code"
+              value={value.postalCode}
+              maxLength={5}
+              placeholder="03920"
+              aria-busy={zipStatus === "loading"}
+              aria-invalid={zipStatus === "not_found" || zipStatus === "error" ? true : undefined}
+              className="pr-9"
+              onChange={(e) => {
+                const postalCode = e.target.value.replace(/\D/g, "").slice(0, 5);
+                onChange((prev) => {
+                  if (prev.postalCode === postalCode) return prev;
+                  if (postalCode.length < 5) {
+                    return { ...prev, postalCode, city: "", district: "" };
+                  }
+                  return { ...prev, postalCode, district: "" };
+                });
+              }}
+            />
+            {zipStatus === "loading" ? (
+              <Loader2
+                className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground"
+                aria-hidden
+              />
+            ) : null}
+          </div>
         </Field>
-        <Field label="Ciudad" htmlFor={`${prefix}-city`} error={fieldError(errors, `${prefix}.city`)}>
+        <Field
+          label="Colonia"
+          htmlFor={`${prefix}-district`}
+          hint={
+            useColoniaSelect
+              ? suburbs.length === 1
+                ? "Única colonia de este C.P."
+                : "Elige la colonia"
+              : "Se llena al consultar el C.P."
+          }
+          error={coloniaError}
+        >
+          {useColoniaSelect ? (
+            <div className="space-y-2">
+              {suburbs.length > 8 ? (
+                <Input
+                  id={`${prefix}-district-filter`}
+                  value={coloniaFilter}
+                  placeholder="Buscar colonia"
+                  aria-label={`Filtrar colonias de ${title.toLowerCase()}`}
+                  onChange={(e) => setColoniaFilter(e.target.value)}
+                />
+              ) : null}
+              <NativeSelect
+                id={`${prefix}-district`}
+                value={value.district}
+                onChange={(e) => onChange((prev) => ({ ...prev, district: e.target.value }))}
+              >
+                {suburbs.length > 1 ? <option value="">Selecciona una colonia</option> : null}
+                {(visibleSuburbs.length > 0 ? visibleSuburbs : suburbs).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          ) : (
+            <Input
+              id={`${prefix}-district`}
+              value={value.district}
+              placeholder="Colonia"
+              disabled={zipStatus === "loading"}
+              onChange={(e) => onChange((prev) => ({ ...prev, district: e.target.value }))}
+            />
+          )}
+        </Field>
+        <Field
+          label="Ciudad"
+          htmlFor={`${prefix}-city`}
+          hint={
+            geoLocked
+              ? municipality
+                ? `Municipio: ${municipality}`
+                : "Completada desde el C.P."
+              : undefined
+          }
+          error={fieldError(errors, `${prefix}.city`)}
+        >
           <Input
             id={`${prefix}-city`}
             value={value.city}
             placeholder="Ciudad de México"
-            onChange={(e) => onChange({ ...value, city: e.target.value })}
+            readOnly={geoLocked}
+            className={geoLocked ? "bg-muted/60" : undefined}
+            onChange={(e) => onChange((prev) => ({ ...prev, city: e.target.value }))}
           />
         </Field>
-        <Field
-          label="Estado"
-          htmlFor={`${prefix}-state`}
-          className="sm:col-span-2"
-          error={fieldError(errors, `${prefix}.state`)}
-        >
+        <Field label="Estado" htmlFor={`${prefix}-state`} error={fieldError(errors, `${prefix}.state`)}>
           <NativeSelect
             id={`${prefix}-state`}
             value={value.state}
-            onChange={(e) => onChange({ ...value, state: e.target.value })}
+            disabled={geoLocked}
+            onChange={(e) => onChange((prev) => ({ ...prev, state: e.target.value }))}
           >
             {MX_STATES.map((state) => (
               <option key={state.code} value={state.code}>
@@ -543,6 +675,20 @@ function AddressCard({
               </option>
             ))}
           </NativeSelect>
+        </Field>
+        <Field label="Calle" htmlFor={`${prefix}-street`} error={fieldError(errors, `${prefix}.street`)}>
+          <Input
+            id={`${prefix}-street`}
+            value={value.street}
+            onChange={(e) => onChange((prev) => ({ ...prev, street: e.target.value }))}
+          />
+        </Field>
+        <Field label="Número" htmlFor={`${prefix}-number`}>
+          <Input
+            id={`${prefix}-number`}
+            value={value.number}
+            onChange={(e) => onChange((prev) => ({ ...prev, number: e.target.value }))}
+          />
         </Field>
         <Field
           label="Nombre"
@@ -554,14 +700,14 @@ function AddressCard({
             id={`${prefix}-name`}
             value={value.name}
             placeholder="Nombre completo"
-            onChange={(e) => onChange({ ...value, name: e.target.value })}
+            onChange={(e) => onChange((prev) => ({ ...prev, name: e.target.value }))}
           />
         </Field>
         <Field label="Empresa" htmlFor={`${prefix}-company`}>
           <Input
             id={`${prefix}-company`}
             value={value.company}
-            onChange={(e) => onChange({ ...value, company: e.target.value })}
+            onChange={(e) => onChange((prev) => ({ ...prev, company: e.target.value }))}
           />
         </Field>
         <Field
@@ -575,7 +721,7 @@ function AddressCard({
             inputMode="tel"
             value={value.phone}
             placeholder="5551234567"
-            onChange={(e) => onChange({ ...value, phone: e.target.value })}
+            onChange={(e) => onChange((prev) => ({ ...prev, phone: e.target.value }))}
           />
         </Field>
         <Field label="Correo" htmlFor={`${prefix}-email`} className="sm:col-span-2" error={fieldError(errors, `${prefix}.email`)}>
@@ -583,28 +729,7 @@ function AddressCard({
             id={`${prefix}-email`}
             type="email"
             value={value.email}
-            onChange={(e) => onChange({ ...value, email: e.target.value })}
-          />
-        </Field>
-        <Field label="Calle" htmlFor={`${prefix}-street`} error={fieldError(errors, `${prefix}.street`)}>
-          <Input
-            id={`${prefix}-street`}
-            value={value.street}
-            onChange={(e) => onChange({ ...value, street: e.target.value })}
-          />
-        </Field>
-        <Field label="Número" htmlFor={`${prefix}-number`}>
-          <Input
-            id={`${prefix}-number`}
-            value={value.number}
-            onChange={(e) => onChange({ ...value, number: e.target.value })}
-          />
-        </Field>
-        <Field label="Colonia" htmlFor={`${prefix}-district`}>
-          <Input
-            id={`${prefix}-district`}
-            value={value.district}
-            onChange={(e) => onChange({ ...value, district: e.target.value })}
+            onChange={(e) => onChange((prev) => ({ ...prev, email: e.target.value }))}
           />
         </Field>
         <Field label="Referencia" htmlFor={`${prefix}-ref`} className="sm:col-span-2">
@@ -612,7 +737,7 @@ function AddressCard({
             id={`${prefix}-ref`}
             value={value.reference}
             placeholder="Entre calles, color de fachada…"
-            onChange={(e) => onChange({ ...value, reference: e.target.value })}
+            onChange={(e) => onChange((prev) => ({ ...prev, reference: e.target.value }))}
           />
         </Field>
       </CardContent>

@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  ENVIA_MOCK_ZIPS,
   ENVIA_MX_CARRIERS,
   EnviaProvider,
   buildEnviaLabelPayload,
   buildEnviaRatePayload,
   buildEnviaRatePayloads,
   mergeEnviaRateLists,
+  parseEnviaGeocode,
   parseEnviaLabel,
   parseEnviaRates,
 } from "@/lib/providers/envia";
@@ -282,5 +284,138 @@ describe("tipos de fusión", () => {
   it("acepta listas vacías", () => {
     const empty: ProviderRate[][] = [];
     expect(mergeEnviaRateLists(empty)).toEqual([]);
+  });
+});
+
+const enviaGeocode03920 = [
+  {
+    zip_code: "03920",
+    country: { name: "México", code: "MX" },
+    state: {
+      name: "Ciudad de Mexico",
+      iso_code: "MX-CMX",
+      code: { "1digit": null, "2digit": "CX", "3digit": "CMX" },
+    },
+    locality: "Ciudad de México",
+    suburbs: ["Insurgentes Mixcoac"],
+    coordinates: { latitude: "19.372097", longitude: "-99.183392" },
+    regions: { region_1: "Ciudad de Mexico", region_2: "Benito Juárez", region_3: "", region_4: "" },
+  },
+];
+
+describe("parseEnviaGeocode", () => {
+  it("lee el arreglo real de geocodes (no {success,data})", () => {
+    const lookup = parseEnviaGeocode(enviaGeocode03920, "03920");
+    expect(lookup).toEqual({
+      postalCode: "03920",
+      city: "Ciudad de México",
+      state: "CX",
+      country: "MX",
+      suburbs: ["Insurgentes Mixcoac"],
+      municipality: "Benito Juárez",
+    });
+  });
+
+  it("fusiona colonias de varias filas y usa el código de 2 letras", () => {
+    const lookup = parseEnviaGeocode(
+      [
+        {
+          zip_code: "64060",
+          locality: "Monterrey",
+          state: { code: { "2digit": "NL", "3digit": "NLE" }, iso_code: "MX-NLE" },
+          suburbs: ["Centro", "Obispado"],
+          regions: { region_2: "Monterrey" },
+        },
+        {
+          zip_code: "64060",
+          locality: "Monterrey",
+          state: { code: { "2digit": "NL" } },
+          suburbs: ["Obispado", "Vista Hermosa"],
+        },
+      ],
+      "64060",
+    );
+    expect(lookup?.state).toBe("NL");
+    expect(lookup?.suburbs).toEqual(["Centro", "Obispado", "Vista Hermosa"]);
+  });
+
+  it("acepta el shape legado {data:{city,state}} sin colonias", () => {
+    expect(
+      parseEnviaGeocode({ data: { city: "Guadalajara", state: "JA", postalCode: "44100" } }, "44100"),
+    ).toMatchObject({
+      city: "Guadalajara",
+      state: "JA",
+      suburbs: [],
+    });
+  });
+
+  it("normaliza iso MX-CMX si falta el código de 2 dígitos", () => {
+    expect(
+      parseEnviaGeocode(
+        [{ locality: "Ciudad de México", state: { iso_code: "MX-CMX" }, suburbs: ["Roma Norte"] }],
+        "06700",
+      )?.state,
+    ).toBe("CX");
+  });
+
+  it("devuelve null si Envia responde [] o sin ciudad", () => {
+    expect(parseEnviaGeocode([], "00000")).toBeNull();
+    expect(parseEnviaGeocode({ success: true, data: { state: "CX" } }, "03920")).toBeNull();
+  });
+});
+
+describe("EnviaProvider.lookupZip", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("en modo simulado incluye colonias de los CP demo y no inventa el resto", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const provider = new EnviaProvider({
+      token: "unused",
+      environment: "sandbox",
+      baseUrl: "https://api-test.envia.com",
+      queriesUrl: "https://queries.test.envia.com",
+      mock: true,
+    });
+    expect(ENVIA_MOCK_ZIPS["03920"]?.suburbs).toEqual(["Insurgentes Mixcoac"]);
+    expect(await provider.lookupZip("03920")).toEqual(ENVIA_MOCK_ZIPS["03920"]);
+    const monterrey = await provider.lookupZip("64060");
+    expect(monterrey).toMatchObject({
+      city: "Monterrey",
+      state: "NL",
+      suburbs: expect.arrayContaining(["Centro", "Obispado"]),
+    });
+    expect(await provider.lookupZip("00000")).toBeNull();
+    expect(await provider.lookupZip("0392")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("parsea la respuesta en arreglo de geocodes.envia.com", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        expect(url).toBe("https://geocodes.envia.com/zipcode/MX/03920");
+        return { ok: true, json: async () => enviaGeocode03920 };
+      }),
+    );
+    expect(await liveProvider().lookupZip("03920")).toMatchObject({
+      city: "Ciudad de México",
+      state: "CX",
+      suburbs: ["Insurgentes Mixcoac"],
+    });
+  });
+
+  it("devuelve null si el shape antiguo {data.city} no viene y el arreglo está vacío", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ success: true, data: { postalCode: "03920" } }),
+      })),
+    );
+    expect(await liveProvider().lookupZip("03920")).toBeNull();
   });
 });
