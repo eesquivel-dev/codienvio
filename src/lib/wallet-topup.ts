@@ -1,14 +1,20 @@
 import { revalidatePath } from "next/cache";
 import { AppError } from "@/lib/errors";
 import {
-  createCheckoutPreference,
+  assertMercadoPagoConfigured,
+  assertMercadoPagoPublicKey,
+  createMercadoPagoPayment,
   fetchMercadoPagoPayment,
   metadataString,
+  parseBrickFormData,
   type MercadoPagoPayment,
 } from "@/lib/mercadopago";
 import { asMoney } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { walletTopUpSchema } from "@/lib/validations";
+import { topUpEstadoFromPaymentStatus } from "@/lib/wallet-copy";
+
+export { topUpEstadoFromPaymentStatus };
 
 export type CreditTopUpResult = {
   credited: boolean;
@@ -57,15 +63,16 @@ export function assertApprovedTopUpPayment(
   }
 }
 
-export async function createWalletTopUpCheckout(params: {
+export async function createWalletTopUpIntent(params: {
   clientId: string;
   amountMxn: number;
-  payerEmail?: string | null;
-}): Promise<{ topUpId: string; checkoutUrl: string }> {
+}): Promise<{ topUpId: string; amountMxn: number }> {
+  assertMercadoPagoConfigured();
+  assertMercadoPagoPublicKey();
   const amount = parseTopUpAmountMxn(params.amountMxn);
   const client = await prisma.client.findUnique({
     where: { id: params.clientId },
-    include: { user: { select: { email: true } } },
+    select: { id: true, active: true },
   });
   if (!client) {
     throw new AppError("Cliente no encontrado", 404, "CLIENT_NOT_FOUND");
@@ -81,27 +88,50 @@ export async function createWalletTopUpCheckout(params: {
       status: "PENDING",
     },
   });
-
-  try {
-    const preference = await createCheckoutPreference({
-      topUpId: topUp.id,
-      clientId: client.id,
-      amountMxn: amount,
-      payerEmail: params.payerEmail || client.user.email,
-    });
-    await prisma.walletTopUp.update({
-      where: { id: topUp.id },
-      data: { preferenceId: preference.id },
-    });
-    return { topUpId: topUp.id, checkoutUrl: preference.checkoutUrl };
-  } catch (error) {
-    await prisma.walletTopUp.update({
-      where: { id: topUp.id },
-      data: { status: "FAILED" },
-    });
-    throw error;
-  }
+  return { topUpId: topUp.id, amountMxn: amount };
 }
+
+export async function processWalletTopUpPayment(
+  params: {
+    clientId: string;
+    topUpId: string;
+    formData: unknown;
+    payerEmail?: string | null;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<CreditTopUpResult & { paymentStatus: string }> {
+  const parsedForm = parseBrickFormData(params.formData);
+  const topUp = await prisma.walletTopUp.findUnique({ where: { id: params.topUpId } });
+  if (!topUp || topUp.clientId !== params.clientId) {
+    throw new AppError("No se encontró la recarga asociada al pago.", 404, "TOP_UP_NOT_FOUND");
+  }
+  if (topUp.status === "FAILED") {
+    throw new AppError("Esta recarga ya no está disponible. Elige el monto de nuevo.", 409, "TOP_UP_FAILED");
+  }
+
+  if (topUp.mercadopagoPaymentId) {
+    return applyMercadoPagoPayment(topUp.mercadopagoPaymentId, fetchImpl);
+  }
+
+  const payment = await createMercadoPagoPayment(
+    {
+      topUpId: topUp.id,
+      clientId: topUp.clientId,
+      amountMxn: asMoney(topUp.amountMxn),
+      formData: parsedForm,
+      payerEmail: params.payerEmail,
+    },
+    fetchImpl,
+  );
+
+  await prisma.walletTopUp.update({
+    where: { id: topUp.id },
+    data: { mercadopagoPaymentId: payment.id },
+  });
+
+  return applyMercadoPagoPayment(payment.id, fetchImpl);
+}
+
 
 /**
  * Credit prepaid saldo exactly once for an approved Mercado Pago payment.

@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { WalletStatusBrick } from "@/app/portal/saldo/payment-brick";
 import { TopUpForm } from "@/app/portal/saldo/top-up-form";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireClient } from "@/lib/auth";
 import { formatDateTimeMx } from "@/lib/format";
-import { getMercadoPagoStatus } from "@/lib/mercadopago";
+import { getMercadoPagoPublicKey, getMercadoPagoStatus } from "@/lib/mercadopago";
 import { formatMxn } from "@/lib/money";
 import { getClientWallet, walletTxnTypeLabel } from "@/lib/wallet";
 import { applyMercadoPagoPayment } from "@/lib/wallet-topup";
@@ -23,13 +24,16 @@ export default async function PortalSaldoPage({
   const session = await requireClient();
   const params = await searchParams;
   const mp = getMercadoPagoStatus();
+  const publicKey = mp.brickReady ? getMercadoPagoPublicKey() : "";
   const estado = firstParam(params.estado);
   const paymentId = firstParam(params.payment_id) || firstParam(params.collection_id);
 
   let syncMessage: { tone: "ok" | "warn" | "err"; text: string } | null = null;
+  let paymentStatus: string | null = null;
   if (paymentId && mp.configured) {
     try {
       const result = await applyMercadoPagoPayment(paymentId);
+      paymentStatus = result.paymentStatus;
       if (result.credited) {
         syncMessage = {
           tone: "ok",
@@ -38,7 +42,7 @@ export default async function PortalSaldoPage({
       } else if (result.alreadyCredited) {
         syncMessage = {
           tone: "ok",
-          text: `Esta recarga ya estaba acreditada. Tu saldo es ${formatMxn(result.balanceMxn)}.`,
+          text: `Tu recarga está acreditada. Tu saldo es ${formatMxn(result.balanceMxn)}.`,
         };
       } else if (result.paymentStatus === "approved") {
         syncMessage = { tone: "warn", text: "El pago está aprobado; el saldo se confirmará en un momento." };
@@ -47,13 +51,13 @@ export default async function PortalSaldoPage({
       } else {
         syncMessage = {
           tone: "warn",
-          text: "Tu pago está pendiente. El saldo se acredita cuando Mercado Pago lo confirme.",
+          text: "Tu pago está pendiente. Si usaste OXXO o SPEI, completa las instrucciones. El saldo se acredita cuando Mercado Pago lo confirme.",
         };
       }
     } catch {
       syncMessage = {
         tone: "warn",
-        text: "Recibimos el regreso de Mercado Pago. Si el pago fue aprobado, el saldo se acredita al confirmar el webhook.",
+        text: "Estamos confirmando el pago. Si ya se aprobó, el saldo se acredita al confirmar el webhook.",
       };
     }
   } else if (estado === "aprobado") {
@@ -70,13 +74,20 @@ export default async function PortalSaldoPage({
     };
   }
 
+  const showPendingBrick = Boolean(
+    publicKey &&
+      paymentId &&
+      paymentStatus &&
+      !["approved", "rejected", "cancelled", "refunded"].includes(paymentStatus),
+  );
+
   const wallet = await getClientWallet(session.user.clientId!, 20);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Saldo"
-        description="Recarga tu saldo CodiEnvio con Mercado Pago. Este dinero cubre el precio de venta de las guías; el operador paga Envía por separado."
+        description="Recarga tu saldo CodiEnvio con Mercado Pago sin salir del portal. Este dinero cubre el precio de venta de las guías; el operador paga Envía por separado."
         actions={
           <Button asChild variant="outline">
             <Link href="/portal#cotizar">Cotizar envío</Link>
@@ -98,17 +109,36 @@ export default async function PortalSaldoPage({
         </p>
       ) : null}
 
+      {showPendingBrick && paymentId ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Instrucciones de pago</CardTitle>
+            <CardDescription>
+              Completa OXXO o SPEI con estos datos. El webhook acreditará el saldo una sola vez.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WalletStatusBrick publicKey={publicKey} paymentId={paymentId} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle>Recargar con Mercado Pago</CardTitle>
             <CardDescription>
-              Elige un monto en MXN. Te redirigimos al checkout de Mercado Pago; al aprobarse el
-              pago, el saldo se acredita una sola vez.
+              Elige un monto en MXN y paga en esta página con tarjeta (sin cuenta de Mercado Pago).
+              También puedes usar OXXO o SPEI; esas recargas quedan pendientes hasta que se
+              confirmen.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TopUpForm configured={mp.configured} />
+            <TopUpForm
+              configured={mp.brickReady}
+              publicKey={publicKey}
+              payerEmail={session.user.email ?? ""}
+            />
           </CardContent>
         </Card>
 

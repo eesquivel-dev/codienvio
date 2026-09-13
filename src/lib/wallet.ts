@@ -10,6 +10,7 @@ export {
   canAfford,
   insufficientBalanceError,
   insufficientBalanceMessage,
+  topUpEstadoFromPaymentStatus,
   walletTxnTypeLabel,
 } from "@/lib/wallet-copy";
 

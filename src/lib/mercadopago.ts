@@ -6,6 +6,7 @@ const MP_API_BASE = "https://api.mercadopago.com";
 
 export type MercadoPagoStatus = {
   configured: boolean;
+  brickReady: boolean;
   hasAccessToken: boolean;
   hasPublicKey: boolean;
   hasWebhookSecret: boolean;
@@ -20,9 +21,17 @@ export type MercadoPagoPayment = {
   metadata: Record<string, unknown> | null;
 };
 
-export type MercadoPagoPreference = {
-  id: string;
-  checkoutUrl: string;
+export type MercadoPagoBrickFormData = {
+  token?: string;
+  payment_method_id: string;
+  installments?: number;
+  issuer_id?: string | number;
+  payer?: {
+    email?: string;
+    identification?: { type?: string; number?: string };
+    first_name?: string;
+    last_name?: string;
+  };
 };
 
 export function getMercadoPagoStatus(): MercadoPagoStatus {
@@ -34,7 +43,25 @@ export function getMercadoPagoStatus(): MercadoPagoStatus {
     hasPublicKey: Boolean(publicKey),
     hasWebhookSecret: Boolean(webhookSecret),
     configured: Boolean(accessToken),
+    brickReady: Boolean(accessToken && publicKey),
   };
+}
+
+/** Public key for Payment Brick. Safe to send to the browser; never expose the access token. */
+export function getMercadoPagoPublicKey(): string {
+  return process.env.MERCADOPAGO_PUBLIC_KEY?.trim() ?? "";
+}
+
+export function assertMercadoPagoPublicKey(): string {
+  const publicKey = getMercadoPagoPublicKey();
+  if (!publicKey) {
+    throw new AppError(
+      "Mercado Pago no está configurado. Pide a tu administrador que agregue MERCADOPAGO_PUBLIC_KEY.",
+      503,
+      "MERCADOPAGO_PUBLIC_KEY_MISSING",
+    );
+  }
+  return publicKey;
 }
 
 export function assertMercadoPagoConfigured(): string {
@@ -121,80 +148,163 @@ function safeEqual(left: string, right: string): boolean {
 
 type FetchLike = typeof fetch;
 
-export async function createCheckoutPreference(
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function optionalTrimmedString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+/**
+ * Accepts Payment Brick `formData` (or `{ formData }`) from the browser.
+ * Amount is never taken from the client — the server overwrites it.
+ */
+export function parseBrickFormData(input: unknown): MercadoPagoBrickFormData {
+  const root = asRecord(input);
+  if (!root) {
+    throw new AppError("Los datos de pago no son válidos.", 400, "INVALID_PAYMENT_FORM");
+  }
+  const form = asRecord(root.formData) ?? root;
+  const paymentMethodId = optionalTrimmedString(form.payment_method_id);
+  if (!paymentMethodId) {
+    throw new AppError("Falta el método de pago.", 400, "PAYMENT_METHOD_REQUIRED");
+  }
+
+  const payerRaw = asRecord(form.payer);
+  const identificationRaw = asRecord(payerRaw?.identification);
+  const identificationType = optionalTrimmedString(identificationRaw?.type);
+  const identificationNumber = optionalTrimmedString(identificationRaw?.number);
+
+  let installments: number | undefined;
+  if (form.installments != null && form.installments !== "") {
+    const parsed = Number(form.installments);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 24) {
+      throw new AppError("El número de mensualidades no es válido.", 400, "INVALID_INSTALLMENTS");
+    }
+    installments = Math.trunc(parsed);
+  }
+
+  const issuerRaw = form.issuer_id;
+  const issuerId =
+    typeof issuerRaw === "number" && Number.isFinite(issuerRaw)
+      ? issuerRaw
+      : optionalTrimmedString(issuerRaw);
+
+  const payerEmail = optionalTrimmedString(payerRaw?.email);
+  const payerFirst = optionalTrimmedString(payerRaw?.first_name);
+  const payerLast = optionalTrimmedString(payerRaw?.last_name);
+  const payer =
+    payerRaw && (payerEmail || payerFirst || payerLast || (identificationType && identificationNumber))
+      ? {
+          ...(payerEmail ? { email: payerEmail } : {}),
+          ...(payerFirst ? { first_name: payerFirst } : {}),
+          ...(payerLast ? { last_name: payerLast } : {}),
+          ...(identificationType && identificationNumber
+            ? { identification: { type: identificationType, number: identificationNumber } }
+            : {}),
+        }
+      : undefined;
+
+  return {
+    payment_method_id: paymentMethodId,
+    ...(optionalTrimmedString(form.token) ? { token: optionalTrimmedString(form.token) } : {}),
+    ...(installments != null ? { installments } : {}),
+    ...(issuerId != null ? { issuer_id: issuerId } : {}),
+    ...(payer ? { payer } : {}),
+  };
+}
+
+function paymentFromPayload(payload: {
+  id?: number | string;
+  status?: string;
+  transaction_amount?: number;
+  currency_id?: string;
+  external_reference?: string | null;
+  metadata?: Record<string, unknown> | null;
+}): MercadoPagoPayment {
+  if (payload.id == null || !payload.status) {
+    throw new AppError("Mercado Pago devolvió un pago incompleto.", 502, "MERCADOPAGO_PAYMENT_INCOMPLETE");
+  }
+  return {
+    id: String(payload.id),
+    status: payload.status,
+    transaction_amount: asMoney(payload.transaction_amount ?? 0),
+    currency_id: payload.currency_id ?? "",
+    external_reference: payload.external_reference ?? null,
+    metadata: payload.metadata ?? null,
+  };
+}
+
+export async function createMercadoPagoPayment(
   params: {
     topUpId: string;
     clientId: string;
     amountMxn: number;
+    formData: MercadoPagoBrickFormData;
     payerEmail?: string | null;
   },
   fetchImpl: FetchLike = fetch,
-): Promise<MercadoPagoPreference> {
+): Promise<MercadoPagoPayment> {
   const token = assertMercadoPagoConfigured();
   const amount = asMoney(params.amountMxn);
-  const base = appBaseUrl();
-  const backUrls = {
-    success: `${base}/portal/saldo?estado=aprobado`,
-    failure: `${base}/portal/saldo?estado=rechazado`,
-    pending: `${base}/portal/saldo?estado=pendiente`,
-  };
-  const secure = base.startsWith("https://");
+  const form = params.formData;
+  const payerEmail = form.payer?.email || params.payerEmail?.trim() || "";
+  if (!payerEmail) {
+    throw new AppError("Falta el correo del pagador.", 400, "PAYER_EMAIL_REQUIRED");
+  }
 
-  const response = await fetchImpl(`${MP_API_BASE}/checkout/preferences`, {
+  const body: Record<string, unknown> = {
+    transaction_amount: amount,
+    description: "Recarga de saldo CodiEnvio",
+    payment_method_id: form.payment_method_id,
+    payer: {
+      email: payerEmail,
+      ...(form.payer?.first_name ? { first_name: form.payer.first_name } : {}),
+      ...(form.payer?.last_name ? { last_name: form.payer.last_name } : {}),
+      ...(form.payer?.identification ? { identification: form.payer.identification } : {}),
+    },
+    external_reference: params.topUpId,
+    metadata: {
+      client_id: params.clientId,
+      top_up_id: params.topUpId,
+      amount_mxn: amount.toFixed(2),
+    },
+    statement_descriptor: "CODIENVIO",
+  };
+
+  if (form.token) {
+    body.token = form.token;
+    body.installments = form.installments ?? 1;
+    if (form.issuer_id != null) body.issuer_id = form.issuer_id;
+  }
+
+  const base = appBaseUrl();
+  if (base.startsWith("https://")) {
+    body.notification_url = `${base}/api/webhooks/mercadopago`;
+  }
+
+  const response = await fetchImpl(`${MP_API_BASE}/v1/payments`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       "X-Idempotency-Key": params.topUpId,
     },
-    body: JSON.stringify({
-      items: [
-        {
-          id: "codienvio-wallet-topup",
-          title: "Recarga de saldo CodiEnvio",
-          description: "Saldo prepagado para comprar guías. No incluye el monedero Envía del operador.",
-          quantity: 1,
-          currency_id: "MXN",
-          unit_price: amount,
-        },
-      ],
-      payer: params.payerEmail ? { email: params.payerEmail } : undefined,
-      external_reference: params.topUpId,
-      metadata: {
-        client_id: params.clientId,
-        top_up_id: params.topUpId,
-        amount_mxn: amount.toFixed(2),
-      },
-      back_urls: backUrls,
-      ...(secure ? { auto_return: "approved", notification_url: `${base}/api/webhooks/mercadopago` } : {}),
-      statement_descriptor: "CODIENVIO",
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     throw new AppError(
-      "No se pudo iniciar el pago con Mercado Pago. Intenta de nuevo o pide ayuda a tu administrador.",
+      "No se pudo procesar el pago con Mercado Pago. Verifica los datos o intenta otro método.",
       502,
-      "MERCADOPAGO_PREFERENCE_FAILED",
+      "MERCADOPAGO_PAYMENT_FAILED",
     );
   }
 
-  const payload = (await response.json()) as {
-    id?: string;
-    init_point?: string;
-    sandbox_init_point?: string;
-  };
-  const checkoutUrl = token.startsWith("TEST-")
-    ? payload.sandbox_init_point || payload.init_point
-    : payload.init_point || payload.sandbox_init_point;
-  if (!payload.id || !checkoutUrl) {
-    throw new AppError(
-      "Mercado Pago no devolvió una URL de pago. Revisa las credenciales.",
-      502,
-      "MERCADOPAGO_PREFERENCE_FAILED",
-    );
-  }
-  return { id: payload.id, checkoutUrl };
+  return paymentFromPayload((await response.json()) as Parameters<typeof paymentFromPayload>[0]);
 }
 
 export async function fetchMercadoPagoPayment(
@@ -212,25 +322,7 @@ export async function fetchMercadoPagoPayment(
       "MERCADOPAGO_PAYMENT_LOOKUP_FAILED",
     );
   }
-  const payload = (await response.json()) as {
-    id?: number | string;
-    status?: string;
-    transaction_amount?: number;
-    currency_id?: string;
-    external_reference?: string | null;
-    metadata?: Record<string, unknown> | null;
-  };
-  if (payload.id == null || !payload.status) {
-    throw new AppError("Mercado Pago devolvió un pago incompleto.", 502, "MERCADOPAGO_PAYMENT_LOOKUP_FAILED");
-  }
-  return {
-    id: String(payload.id),
-    status: payload.status,
-    transaction_amount: asMoney(payload.transaction_amount ?? 0),
-    currency_id: payload.currency_id ?? "",
-    external_reference: payload.external_reference ?? null,
-    metadata: payload.metadata ?? null,
-  };
+  return paymentFromPayload((await response.json()) as Parameters<typeof paymentFromPayload>[0]);
 }
 
 export function metadataString(metadata: Record<string, unknown> | null | undefined, key: string): string | null {

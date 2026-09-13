@@ -35,6 +35,7 @@ type ClientKeys = {
 
 type MercadoPagoStatusView = {
   configured: boolean;
+  brickReady: boolean;
   hasAccessToken: boolean;
   hasPublicKey: boolean;
   hasWebhookSecret: boolean;
@@ -112,13 +113,22 @@ export function IntegrationsCatalog({
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Mercado Pago</CardTitle>
-              <Badge variant={mercadoPago.configured ? "success" : "outline"}>
-                {mercadoPago.configured ? "En vivo" : "Próximamente"}
+              <Badge
+                variant={
+                  mercadoPago.brickReady ? "success" : mercadoPago.hasAccessToken ? "warning" : "outline"
+                }
+              >
+                {mercadoPago.brickReady
+                  ? "En vivo"
+                  : mercadoPago.hasAccessToken
+                    ? "Falta public key"
+                    : "Próximamente"}
               </Badge>
             </div>
             <CardDescription>
-              Recarga de saldo del cliente desde el portal (Checkout Pro). La carga manual en
-              Clientes sigue disponible. Los secretos no se muestran.
+              Recarga de saldo del cliente en el portal con Payment Brick (tarjeta, OXXO o SPEI, sin
+              redirigir a Checkout Pro). La carga manual en Clientes sigue disponible. Los secretos
+              no se muestran.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -138,9 +148,11 @@ export function IntegrationsCatalog({
               ok={mercadoPago.hasWebhookSecret || !mercadoPago.configured}
             />
             <p className="text-muted-foreground">
-              {mercadoPago.configured
-                ? "Los clientes pueden recargar en Portal → Saldo. El webhook acredita el ledger una sola vez."
-                : "Configura MERCADOPAGO_ACCESS_TOKEN (y la public key) en el entorno para activar el checkout."}
+              {mercadoPago.brickReady
+                ? "Los clientes recargan en Portal → Saldo sin salir del sitio. Un pago approved acredita el ledger una sola vez. OXXO/SPEI quedan pendientes y el webhook los confirma."
+                : mercadoPago.hasAccessToken
+                  ? "Falta MERCADOPAGO_PUBLIC_KEY. El Brick del portal la necesita (no es un secreto; se carga en el navegador)."
+                  : "Configura MERCADOPAGO_ACCESS_TOKEN y MERCADOPAGO_PUBLIC_KEY en el entorno para activar el Brick."}
             </p>
           </CardContent>
         </Card>

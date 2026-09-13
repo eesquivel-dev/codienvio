@@ -7,6 +7,7 @@ import {
   insufficientBalanceError,
   insufficientBalanceMessage,
   reserveClientFunds,
+  topUpEstadoFromPaymentStatus,
   walletTxnTypeLabel,
 } from "@/lib/wallet";
 
@@ -32,6 +33,13 @@ describe("wallet copy", () => {
     expect(walletTxnTypeLabel("TOP_UP")).toBe("Carga");
     expect(walletTxnTypeLabel("PURCHASE")).toBe("Compra de guía");
     expect(walletTxnTypeLabel("ADJUSTMENT")).toBe("Ajuste");
+  });
+
+  it("mapea el estado de pago de Mercado Pago a la URL del portal", () => {
+    expect(topUpEstadoFromPaymentStatus("approved")).toBe("aprobado");
+    expect(topUpEstadoFromPaymentStatus("rejected")).toBe("rechazado");
+    expect(topUpEstadoFromPaymentStatus("pending")).toBe("pendiente");
+    expect(topUpEstadoFromPaymentStatus("in_process")).toBe("pendiente");
   });
 });
 

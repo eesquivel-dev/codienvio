@@ -2,7 +2,7 @@
 
 Revendedor de guías de envío para **México**, integrado con **Envia.com**. Edgar cotiza y compra con su cuenta negociada; los clientes ven solo el **precio final** (comisión incluida) en el portal web o la API REST.
 
-Cada cliente tiene **saldo prepagado en MXN**. El admin puede cargarlo a mano y el cliente puede recargarlo desde el portal con **Mercado Pago** (Checkout Pro). CodiEnvio cobra `clientPrice` de ese saldo al comprar una guía y paga a Envía desde el monedero de la plataforma. Fuera de alcance: CFDI de la recarga, recarga automática del monedero Envía, iVoy en vivo y monedas distintas a MXN. Hay un hook de proveedor `iVoy` para más adelante.
+Cada cliente tiene **saldo prepagado en MXN**. El admin puede cargarlo a mano y el cliente puede recargarlo desde el portal con **Mercado Pago** (Payment Brick, sin salir de CodiEnvio). CodiEnvio cobra `clientPrice` de ese saldo al comprar una guía y paga a Envía desde el monedero de la plataforma. Fuera de alcance: CFDI de la recarga, recarga automática del monedero Envía, iVoy en vivo y monedas distintas a MXN. Hay un hook de proveedor `iVoy` para más adelante.
 
 ## Stack
 
@@ -90,7 +90,7 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 ### Portal (cliente)
 
 - **Inicio**: bienvenida + acción principal **Cotizar envío**.
-- **Saldo** (`/portal/saldo`): recarga con Mercado Pago (montos predefinidos o personalizado). El webhook acredita `Client.balanceMxn` y un movimiento `TOP_UP` una sola vez.
+- **Saldo** (`/portal/saldo`): recarga con Mercado Pago Payment Brick (montos predefinidos o personalizado). Un pago `approved` acredita `Client.balanceMxn` y un movimiento `TOP_UP` una sola vez; OXXO/SPEI pendientes los confirma el webhook.
 - Saldo prepagado visible en el encabezado y en la cotización. **Comprar guía** exige saldo ≥ precio de venta.
 - Formulario: origen/destino (C.P., ciudad, estado MX), medidas, peso y valor declarado. El botón **Cargar ejemplo CDMX → MTY** rellena un envío de prueba.
 - Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía. Si el saldo no alcanza, se muestra el monto faltante y no se llama a Envía.
@@ -102,7 +102,7 @@ Separado del portal de cliente (`/portal`). Navegación:
 
 - **Panel** (`/admin`): ventas, margen, ingreso y envíos recientes. Muestra ceros hasta que exista al menos una guía comprada (usa modo simulado si no hay token).
 - **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger, API keys) y **Cargar saldo**.
-- **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key, sin secretos) y API keys por cliente. iVoy sigue como próximo.
+- **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key para Payment Brick, sin secretos) y API keys por cliente. iVoy sigue como próximo.
 - **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Se puede marcar un mes como *facturado* (sin CFDI).
 - **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente.
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
@@ -111,10 +111,10 @@ Fuera de alcance todavía: timbrado CFDI de la recarga.
 
 ## Mercado Pago (recarga de saldo)
 
-La recarga financia el **saldo CodiEnvio del cliente**, no el monedero Envía del operador.
+La recarga financia el **saldo CodiEnvio del cliente**, no el monedero Envía del operador. El cobro ocurre **dentro del portal** (`/portal/saldo`) con [Payment Brick](https://www.mercadopago.com.mx/developers/es/docs/checkout-bricks/payment-brick/introduction): no se redirige a Checkout Pro ni se exige una cuenta de Mercado Pago para tarjeta.
 
 1. Crea una aplicación en [Tu integración](https://www.mercadopago.com.mx/developers/panel).
-2. Copia el **Access Token** y la **Public Key** (usa `TEST-` en sandbox).
+2. Copia el **Access Token** y la **Public Key** (usa `TEST-` / `APP_USR-` de prueba en sandbox).
 3. En producción, configura un webhook `payment` hacia `https://<tu-dominio>/api/webhooks/mercadopago` y pega el secret en `MERCADOPAGO_WEBHOOK_SECRET`.
 4. Define en el entorno (nunca en git):
 
@@ -124,10 +124,12 @@ MERCADOPAGO_PUBLIC_KEY=
 MERCADOPAGO_WEBHOOK_SECRET=
 ```
 
-5. `NEXTAUTH_URL` debe ser la URL pública (HTTPS en producción) para `back_urls` y `notification_url`.
-6. Sin token, el portal muestra un error en español y Admin → Integraciones deja Mercado Pago en **Próximamente**.
+5. **Public key en el navegador:** `MERCADOPAGO_PUBLIC_KEY` se envía al cliente solo para inicializar Payment Brick (`https://sdk.mercadopago.com/js/v2`). No es un secreto. El **access token nunca sale del servidor**: crea el pago (`POST /v1/payments`) y consulta el webhook.
+6. `NEXTAUTH_URL` debe ser la URL pública (HTTPS en producción) para `notification_url` de pagos pendientes (OXXO/SPEI).
+7. Métodos habilitados en el Brick: tarjeta de crédito/débito (invitado, una sola exhibición), OXXO y SPEI cuando Mercado Pago los ofrezca para la cuenta. No se muestra Wallet / login de Mercado Pago.
+8. Sin token o sin public key, el portal muestra un error en español. Admin → Integraciones marca **En vivo** solo si están las dos.
 
-El webhook consulta el pago en la API de Mercado Pago (no confía en el monto del body) y usa `WalletTransaction.mercadopagoPaymentId` como clave de idempotencia.
+Un pago `approved` acredita el saldo en el mismo request del Brick. El webhook (y el regreso a `/portal/saldo?payment_id=`) consulta el pago en la API de Mercado Pago (no confía en el monto del navegador) y usa `WalletTransaction.mercadopagoPaymentId` como clave de idempotencia. OXXO/SPEI quedan `pending` hasta que el comprador pague; entonces el webhook acredita una sola vez.
 
 ## Flujo sandbox Envia
 

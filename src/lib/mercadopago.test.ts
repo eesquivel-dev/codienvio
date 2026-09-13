@@ -1,9 +1,13 @@
 import { createHmac } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assertMercadoPagoConfigured,
+  assertMercadoPagoPublicKey,
+  createMercadoPagoPayment,
   extractMercadoPagoPaymentId,
+  getMercadoPagoPublicKey,
   getMercadoPagoStatus,
+  parseBrickFormData,
   verifyMercadoPagoWebhookSignature,
 } from "@/lib/mercadopago";
 
@@ -20,27 +24,135 @@ afterEach(() => {
 });
 
 describe("getMercadoPagoStatus", () => {
-  it("marca configurado solo si hay access token", () => {
+  it("marca configurado solo si hay access token y Brick si también hay public key", () => {
     delete process.env.MERCADOPAGO_ACCESS_TOKEN;
     delete process.env.MERCADOPAGO_PUBLIC_KEY;
     expect(getMercadoPagoStatus()).toMatchObject({
       configured: false,
+      brickReady: false,
       hasAccessToken: false,
       hasPublicKey: false,
     });
 
     process.env.MERCADOPAGO_ACCESS_TOKEN = "TEST-abc";
+    expect(getMercadoPagoStatus()).toMatchObject({
+      configured: true,
+      brickReady: false,
+      hasAccessToken: true,
+      hasPublicKey: false,
+    });
+
     process.env.MERCADOPAGO_PUBLIC_KEY = "APP_USR-pub";
     expect(getMercadoPagoStatus()).toMatchObject({
       configured: true,
+      brickReady: true,
       hasAccessToken: true,
       hasPublicKey: true,
     });
+    expect(getMercadoPagoPublicKey()).toBe("APP_USR-pub");
   });
 
-  it("lanza error en español si falta el token", () => {
+  it("lanza error en español si falta el token o la public key", () => {
     delete process.env.MERCADOPAGO_ACCESS_TOKEN;
     expect(() => assertMercadoPagoConfigured()).toThrow(/Mercado Pago no está configurado/);
+    delete process.env.MERCADOPAGO_PUBLIC_KEY;
+    expect(() => assertMercadoPagoPublicKey()).toThrow(/MERCADOPAGO_PUBLIC_KEY/);
+  });
+});
+
+describe("parseBrickFormData", () => {
+  it("acepta formData del Brick y el envoltorio onSubmit", () => {
+    expect(
+      parseBrickFormData({
+        token: "tok_card",
+        payment_method_id: "visa",
+        installments: "1",
+        issuer_id: "310",
+        payer: { email: "ana@demo.mx", identification: { type: "CURP", number: "X1" } },
+        transaction_amount: 9999,
+      }),
+    ).toEqual({
+      token: "tok_card",
+      payment_method_id: "visa",
+      installments: 1,
+      issuer_id: "310",
+      payer: { email: "ana@demo.mx", identification: { type: "CURP", number: "X1" } },
+    });
+
+    expect(parseBrickFormData({ formData: { payment_method_id: "oxxo", payer: { email: "a@b.mx" } } })).toEqual({
+      payment_method_id: "oxxo",
+      payer: { email: "a@b.mx" },
+    });
+  });
+
+  it("rechaza un payload sin método de pago", () => {
+    expect(() => parseBrickFormData({ token: "tok" })).toThrow(/método de pago/);
+  });
+});
+
+describe("createMercadoPagoPayment", () => {
+  const previous = {
+    token: process.env.MERCADOPAGO_ACCESS_TOKEN,
+    url: process.env.NEXTAUTH_URL,
+  };
+
+  afterEach(() => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = previous.token;
+    process.env.NEXTAUTH_URL = previous.url;
+  });
+
+  it("crea el pago con el monto del servidor, no el del Brick", async () => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = "TEST-token";
+    process.env.NEXTAUTH_URL = "https://codienvio.example";
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: 77,
+        status: "approved",
+        transaction_amount: 500,
+        currency_id: "MXN",
+        external_reference: "top1",
+        metadata: { client_id: "c1" },
+      }),
+    });
+
+    const payment = await createMercadoPagoPayment(
+      {
+        topUpId: "top1",
+        clientId: "c1",
+        amountMxn: 500,
+        formData: {
+          token: "tok_card",
+          payment_method_id: "visa",
+          installments: 1,
+          payer: { email: "cliente@demo.mx" },
+        },
+        payerEmail: "cliente@demo.mx",
+      },
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    expect(payment).toMatchObject({ id: "77", status: "approved", transaction_amount: 500 });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://api.mercadopago.com/v1/payments",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer TEST-token",
+          "X-Idempotency-Key": "top1",
+        }),
+      }),
+    );
+    const body = JSON.parse(String(fetchImpl.mock.calls[0][1].body)) as {
+      transaction_amount: number;
+      token: string;
+      notification_url: string;
+      metadata: { top_up_id: string };
+    };
+    expect(body.transaction_amount).toBe(500);
+    expect(body.token).toBe("tok_card");
+    expect(body.notification_url).toBe("https://codienvio.example/api/webhooks/mercadopago");
+    expect(body.metadata.top_up_id).toBe("top1");
   });
 });
 

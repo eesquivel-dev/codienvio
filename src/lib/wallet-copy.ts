@@ -40,3 +40,9 @@ export function walletTxnTypeLabel(type: WalletTxnType): string {
   if (type === "PURCHASE") return "Compra de guía";
   return "Ajuste";
 }
+
+export function topUpEstadoFromPaymentStatus(status: string): "aprobado" | "rechazado" | "pendiente" {
+  if (status === "approved") return "aprobado";
+  if (["rejected", "cancelled", "refunded"].includes(status)) return "rechazado";
+  return "pendiente";
+}

@@ -54,7 +54,7 @@ export default async function PortalPage() {
                 {formatMxn(wallet.balanceMxn)}
               </p>
               <Link href="/portal/saldo" className="type-caption mt-1 inline-block font-semibold text-navy underline underline-offset-2">
-                Recargar con Mercado Pago
+                Recargar saldo
               </Link>
             </CardContent>
           </Card>
