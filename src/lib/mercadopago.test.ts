@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assertMercadoPagoConfigured,
   assertMercadoPagoPublicKey,
+  createCheckoutPreference,
   createMercadoPagoPayment,
   extractMercadoPagoPaymentId,
   getMercadoPagoPublicKey,
@@ -87,6 +88,61 @@ describe("parseBrickFormData", () => {
 
   it("rechaza un payload sin método de pago", () => {
     expect(() => parseBrickFormData({ token: "tok" })).toThrow(/método de pago/);
+  });
+});
+
+describe("createCheckoutPreference", () => {
+  const previous = {
+    token: process.env.MERCADOPAGO_ACCESS_TOKEN,
+    url: process.env.NEXTAUTH_URL,
+  };
+
+  afterEach(() => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = previous.token;
+    process.env.NEXTAUTH_URL = previous.url;
+  });
+
+  it("crea la preferencia de Checkout Pro con el monto del servidor", async () => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = "TEST-token";
+    process.env.NEXTAUTH_URL = "https://codienvio.example";
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "pref_1",
+        sandbox_init_point: "https://sandbox.mercadopago.com/checkout/v1/redirect?pref_id=pref_1",
+        init_point: "https://www.mercadopago.com/checkout/v1/redirect?pref_id=pref_1",
+      }),
+    });
+
+    const preference = await createCheckoutPreference(
+      { topUpId: "top1", clientId: "c1", amountMxn: 500, payerEmail: "cliente@demo.mx" },
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    expect(preference).toEqual({
+      id: "pref_1",
+      checkoutUrl: "https://sandbox.mercadopago.com/checkout/v1/redirect?pref_id=pref_1",
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://api.mercadopago.com/checkout/preferences",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer TEST-token",
+          "X-Idempotency-Key": "top1",
+        }),
+      }),
+    );
+    const body = JSON.parse(String(fetchImpl.mock.calls[0][1].body)) as {
+      external_reference: string;
+      items: { unit_price: number }[];
+      notification_url: string;
+      metadata: { top_up_id: string };
+    };
+    expect(body.external_reference).toBe("top1");
+    expect(body.items[0].unit_price).toBe(500);
+    expect(body.notification_url).toBe("https://codienvio.example/api/webhooks/mercadopago");
+    expect(body.metadata.top_up_id).toBe("top1");
   });
 });
 

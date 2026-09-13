@@ -121,14 +121,14 @@ export function IntegrationsCatalog({
                 {mercadoPago.brickReady
                   ? "En vivo"
                   : mercadoPago.hasAccessToken
-                    ? "Falta public key"
+                    ? "Checkout Pro"
                     : "Próximamente"}
               </Badge>
             </div>
             <CardDescription>
-              Recarga de saldo del cliente en el portal con Payment Brick (tarjeta, OXXO o SPEI, sin
-              redirigir a Checkout Pro). La carga manual en Clientes sigue disponible. Los secretos
-              no se muestran.
+              Recarga de saldo del cliente: Payment Brick en el portal (tarjeta, OXXO o SPEI) y
+              Checkout Pro (cuenta Mercado Pago). La carga manual en Clientes sigue disponible. Los
+              secretos no se muestran.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -149,10 +149,10 @@ export function IntegrationsCatalog({
             />
             <p className="text-muted-foreground">
               {mercadoPago.brickReady
-                ? "Los clientes recargan en Portal → Saldo sin salir del sitio. Un pago approved acredita el ledger una sola vez. OXXO/SPEI quedan pendientes y el webhook los confirma."
+                ? "Los clientes eligen pagar en el portal (Brick) o con su cuenta de Mercado Pago (Checkout Pro). Un pago approved acredita el ledger una sola vez. OXXO/SPEI quedan pendientes y el webhook los confirma."
                 : mercadoPago.hasAccessToken
-                  ? "Falta MERCADOPAGO_PUBLIC_KEY. El Brick del portal la necesita (no es un secreto; se carga en el navegador)."
-                  : "Configura MERCADOPAGO_ACCESS_TOKEN y MERCADOPAGO_PUBLIC_KEY en el entorno para activar el Brick."}
+                  ? "Checkout Pro está listo. Falta MERCADOPAGO_PUBLIC_KEY para el Brick del portal (no es un secreto; se carga en el navegador)."
+                  : "Configura MERCADOPAGO_ACCESS_TOKEN (Checkout Pro) y MERCADOPAGO_PUBLIC_KEY (Payment Brick) en el entorno."}
             </p>
           </CardContent>
         </Card>

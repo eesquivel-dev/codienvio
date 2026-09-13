@@ -8,8 +8,10 @@ import {
   insufficientBalanceMessage,
   reserveClientFunds,
   topUpEstadoFromPaymentStatus,
+  walletCheckoutPathLabel,
   walletTxnTypeLabel,
 } from "@/lib/wallet";
+import { BRICK_AUTOFILL_HINT } from "@/lib/wallet-copy";
 
 describe("wallet copy", () => {
   it("exige saldo ≥ precio de venta", () => {
@@ -40,6 +42,14 @@ describe("wallet copy", () => {
     expect(topUpEstadoFromPaymentStatus("rejected")).toBe("rechazado");
     expect(topUpEstadoFromPaymentStatus("pending")).toBe("pendiente");
     expect(topUpEstadoFromPaymentStatus("in_process")).toBe("pendiente");
+  });
+
+  it("etiqueta las dos vías de recarga y avisa del autocompletado del Brick", () => {
+    expect(walletCheckoutPathLabel("brick")).toBe("Pagar aquí");
+    expect(walletCheckoutPathLabel("checkout_pro")).toBe("Pagar con Mercado Pago");
+    expect(BRICK_AUTOFILL_HINT).toMatch(/vencimiento/i);
+    expect(BRICK_AUTOFILL_HINT).toMatch(/CVV/i);
+    expect(BRICK_AUTOFILL_HINT).not.toMatch(/\b(?:4[0-9]{12}(?:[0-9]{3})?)\b/);
   });
 });
 

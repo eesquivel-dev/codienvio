@@ -21,6 +21,11 @@ export type MercadoPagoPayment = {
   metadata: Record<string, unknown> | null;
 };
 
+export type MercadoPagoPreference = {
+  id: string;
+  checkoutUrl: string;
+};
+
 export type MercadoPagoBrickFormData = {
   token?: string;
   payment_method_id: string;
@@ -159,8 +164,88 @@ function optionalTrimmedString(value: unknown): string | undefined {
 }
 
 /**
+ * Checkout Pro preference (redirect). Same WalletTopUp + webhook as Payment Brick.
+ */
+export async function createCheckoutPreference(
+  params: {
+    topUpId: string;
+    clientId: string;
+    amountMxn: number;
+    payerEmail?: string | null;
+  },
+  fetchImpl: FetchLike = fetch,
+): Promise<MercadoPagoPreference> {
+  const token = assertMercadoPagoConfigured();
+  const amount = asMoney(params.amountMxn);
+  const base = appBaseUrl();
+  const backUrls = {
+    success: `${base}/portal/saldo?estado=aprobado`,
+    failure: `${base}/portal/saldo?estado=rechazado`,
+    pending: `${base}/portal/saldo?estado=pendiente`,
+  };
+  const secure = base.startsWith("https://");
+
+  const response = await fetchImpl(`${MP_API_BASE}/checkout/preferences`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": params.topUpId,
+    },
+    body: JSON.stringify({
+      items: [
+        {
+          id: "codienvio-wallet-topup",
+          title: "Recarga de saldo CodiEnvio",
+          description: "Saldo prepagado para comprar guías. No incluye el monedero Envía del operador.",
+          quantity: 1,
+          currency_id: "MXN",
+          unit_price: amount,
+        },
+      ],
+      payer: params.payerEmail ? { email: params.payerEmail } : undefined,
+      external_reference: params.topUpId,
+      metadata: {
+        client_id: params.clientId,
+        top_up_id: params.topUpId,
+        amount_mxn: amount.toFixed(2),
+      },
+      back_urls: backUrls,
+      ...(secure ? { auto_return: "approved", notification_url: `${base}/api/webhooks/mercadopago` } : {}),
+      statement_descriptor: "CODIENVIO",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new AppError(
+      "No se pudo iniciar el pago con Mercado Pago. Intenta de nuevo o pide ayuda a tu administrador.",
+      502,
+      "MERCADOPAGO_PREFERENCE_FAILED",
+    );
+  }
+
+  const payload = (await response.json()) as {
+    id?: string;
+    init_point?: string;
+    sandbox_init_point?: string;
+  };
+  const checkoutUrl = token.startsWith("TEST-")
+    ? payload.sandbox_init_point || payload.init_point
+    : payload.init_point || payload.sandbox_init_point;
+  if (!payload.id || !checkoutUrl) {
+    throw new AppError(
+      "Mercado Pago no devolvió una URL de pago. Revisa las credenciales.",
+      502,
+      "MERCADOPAGO_PREFERENCE_FAILED",
+    );
+  }
+  return { id: payload.id, checkoutUrl };
+}
+
+/**
  * Accepts Payment Brick `formData` (or `{ formData }`) from the browser.
  * Amount is never taken from the client — the server overwrites it.
+ * Never persist PAN/CVV: only token, method, installments and payer identity.
  */
 export function parseBrickFormData(input: unknown): MercadoPagoBrickFormData {
   const root = asRecord(input);

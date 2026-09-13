@@ -6,7 +6,11 @@ import { errorToResponse } from "@/lib/errors";
 import { createQuote, purchaseFromQuote } from "@/lib/services/shipping";
 import { quoteRequestSchema } from "@/lib/validations";
 import { getClientWallet } from "@/lib/wallet";
-import { createWalletTopUpIntent, processWalletTopUpPayment } from "@/lib/wallet-topup";
+import {
+  createWalletTopUpCheckout,
+  createWalletTopUpIntent,
+  processWalletTopUpPayment,
+} from "@/lib/wallet-topup";
 
 export async function quoteAction(input: unknown) {
   try {
@@ -42,6 +46,21 @@ export async function startWalletTopUpAction(amountMxn: number) {
       amountMxn,
     });
     return { ok: true as const, topUpId: intent.topUpId, amountMxn: intent.amountMxn };
+  } catch (error) {
+    const { body } = errorToResponse(error);
+    return { ok: false as const, error: body.error.message };
+  }
+}
+
+export async function startWalletCheckoutProAction(amountMxn: number) {
+  try {
+    const session = await requireClient();
+    const checkout = await createWalletTopUpCheckout({
+      clientId: session.user.clientId!,
+      amountMxn,
+      payerEmail: session.user.email,
+    });
+    return { ok: true as const, checkoutUrl: checkout.checkoutUrl, topUpId: checkout.topUpId };
   } catch (error) {
     const { body } = errorToResponse(error);
     return { ok: false as const, error: body.error.message };
