@@ -46,3 +46,12 @@ export function topUpEstadoFromPaymentStatus(status: string): "aprobado" | "rech
   if (["rejected", "cancelled", "refunded"].includes(status)) return "rechazado";
   return "pendiente";
 }
+
+export type WalletCheckoutPath = "brick" | "checkout_pro";
+
+export const BRICK_AUTOFILL_HINT =
+  "Si el navegador o el administrador de contraseñas completa el número de tarjeta, escribe la fecha de vencimiento y el código de seguridad (CVV) a mano. Mercado Pago protege esos campos en un formulario seguro y no puede recibirlos del autocompletado.";
+
+export function walletCheckoutPathLabel(path: WalletCheckoutPath): string {
+  return path === "brick" ? "Pagar aquí" : "Pagar con Mercado Pago";
+}

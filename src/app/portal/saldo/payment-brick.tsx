@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { BRICK_AUTOFILL_HINT } from "@/lib/wallet-copy";
 
 const MP_SDK_SRC = "https://sdk.mercadopago.com/js/v2";
 
@@ -58,16 +59,42 @@ function loadMercadoPagoSdk(): Promise<MercadoPagoCtor> {
   return sdkPromise;
 }
 
+/**
+ * Brick visual + card field labels. Secure Fields live in MP iframes — the host
+ * cannot set autocomplete on expiry/CVV. Clear labels help the user finish those
+ * fields by hand. Never log or store PAN/CVV.
+ */
 const brickVisual = {
+  hideFormTitle: false,
   style: {
     theme: "default",
     customVariables: {
       baseColor: "#0B1B4B",
+      outlinePrimaryColor: "#0B1B4B",
       buttonBackgroundColor: "#0B1B4B",
       buttonTextColor: "#FFFFFF",
       formBackgroundColor: "#FFFFFF",
+      inputFocusedBorderColor: "#0B1B4B",
+      textPrimaryColor: "#0B1B4B",
     },
   },
+  texts: {
+    formTitle: "Datos de la tarjeta",
+    formSubmit: "Pagar recarga",
+    cardNumber: { label: "Número de tarjeta", placeholder: "•••• •••• •••• ••••" },
+    expirationDate: { label: "Vencimiento (MM/AA)", placeholder: "MM/AA" },
+    securityCode: { label: "Código de seguridad (CVV)", placeholder: "CVV" },
+  },
+};
+
+const brickPaymentMethods = {
+  maxInstallments: 1,
+  minInstallments: 1,
+  creditCard: "all",
+  debitCard: "all",
+  prepaidCard: "all",
+  ticket: ["oxxo"],
+  bankTransfer: "all",
 };
 
 export function WalletPaymentBrick({
@@ -103,13 +130,7 @@ export function WalletPaymentBrick({
           },
           customization: {
             visual: brickVisual,
-            paymentMethods: {
-              maxInstallments: 1,
-              creditCard: "all",
-              debitCard: "all",
-              ticket: ["oxxo"],
-              bankTransfer: "all",
-            },
+            paymentMethods: brickPaymentMethods,
           },
           callbacks: {
             onReady: () => {
@@ -138,7 +159,13 @@ export function WalletPaymentBrick({
   }, [amountMxn, containerId, onBrickError, onSubmitForm, payerEmail, publicKey]);
 
   return (
-    <div className="space-y-3">
+    <section className="space-y-3" aria-labelledby={`${containerId}-autofill-hint`}>
+      <p
+        id={`${containerId}-autofill-hint`}
+        className="rounded-md border border-navy/10 bg-papel px-3 py-2 text-sm text-navy"
+      >
+        {BRICK_AUTOFILL_HINT}
+      </p>
       {!ready && !loadError ? (
         <p className="text-sm text-muted-foreground">Cargando el pago seguro de Mercado Pago…</p>
       ) : null}
@@ -147,8 +174,8 @@ export function WalletPaymentBrick({
           {loadError}
         </p>
       ) : null}
-      <div id={containerId} className="min-h-[12rem]" />
-    </div>
+      <div id={containerId} className="min-h-[12rem]" data-mp-brick="payment" />
+    </section>
   );
 }
 

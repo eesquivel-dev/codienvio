@@ -7,10 +7,12 @@ import { insufficientBalanceError, type WalletLedgerRow } from "@/lib/wallet-cop
 export type { WalletLedgerRow, WalletTxnType } from "@/lib/wallet-copy";
 export {
   assertSufficientBalance,
+  BRICK_AUTOFILL_HINT,
   canAfford,
   insufficientBalanceError,
   insufficientBalanceMessage,
   topUpEstadoFromPaymentStatus,
+  walletCheckoutPathLabel,
   walletTxnTypeLabel,
 } from "@/lib/wallet-copy";
 

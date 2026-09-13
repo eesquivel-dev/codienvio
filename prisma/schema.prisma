@@ -188,7 +188,7 @@ model WalletTransaction {
   @@index([clientId, createdAt])
 }
 
-/// Client wallet top-up. Credited once when the Mercado Pago payment is approved (Payment Brick or webhook).
+/// Client wallet top-up. Credited once when the Mercado Pago payment is approved (Payment Brick, Checkout Pro, or webhook).
 model WalletTopUp {
   id                   String            @id @default(cuid())
   clientId             String

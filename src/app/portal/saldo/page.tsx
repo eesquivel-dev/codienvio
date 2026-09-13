@@ -87,7 +87,7 @@ export default async function PortalSaldoPage({
     <div className="space-y-6">
       <PageHeader
         title="Saldo"
-        description="Recarga tu saldo CodiEnvio con Mercado Pago sin salir del portal. Este dinero cubre el precio de venta de las guías; el operador paga Envía por separado."
+        description="Recarga tu saldo CodiEnvio con Mercado Pago: paga aquí (tarjeta, OXXO o SPEI) o con tu cuenta de Mercado Pago. Este dinero cubre el precio de venta de las guías; el operador paga Envía por separado."
         actions={
           <Button asChild variant="outline">
             <Link href="/portal#cotizar">Cotizar envío</Link>
@@ -126,16 +126,17 @@ export default async function PortalSaldoPage({
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Recargar con Mercado Pago</CardTitle>
+            <CardTitle>Recargar saldo</CardTitle>
             <CardDescription>
-              Elige un monto en MXN y paga en esta página con tarjeta (sin cuenta de Mercado Pago).
-              También puedes usar OXXO o SPEI; esas recargas quedan pendientes hasta que se
-              confirmen.
+              Elige un monto en MXN. «Pagar aquí» usa tarjeta, OXXO o SPEI en esta página. «Pagar
+              con Mercado Pago» te lleva al checkout de tu cuenta. El saldo se acredita una sola vez
+              cuando el pago queda aprobado.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <TopUpForm
-              configured={mp.brickReady}
+              configured={mp.configured}
+              brickReady={mp.brickReady}
               publicKey={publicKey}
               payerEmail={session.user.email ?? ""}
             />

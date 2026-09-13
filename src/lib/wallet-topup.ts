@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import {
   assertMercadoPagoConfigured,
   assertMercadoPagoPublicKey,
+  createCheckoutPreference,
   createMercadoPagoPayment,
   fetchMercadoPagoPayment,
   metadataString,
@@ -89,6 +90,58 @@ export async function createWalletTopUpIntent(params: {
     },
   });
   return { topUpId: topUp.id, amountMxn: amount };
+}
+
+export async function createWalletTopUpCheckout(
+  params: {
+    clientId: string;
+    amountMxn: number;
+    payerEmail?: string | null;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ topUpId: string; checkoutUrl: string }> {
+  const amount = parseTopUpAmountMxn(params.amountMxn);
+  const client = await prisma.client.findUnique({
+    where: { id: params.clientId },
+    include: { user: { select: { email: true } } },
+  });
+  if (!client) {
+    throw new AppError("Cliente no encontrado", 404, "CLIENT_NOT_FOUND");
+  }
+  if (!client.active) {
+    throw new AppError("La cuenta está inactiva. Pide ayuda a tu administrador.", 403, "CLIENT_INACTIVE");
+  }
+
+  const topUp = await prisma.walletTopUp.create({
+    data: {
+      clientId: client.id,
+      amountMxn: amount,
+      status: "PENDING",
+    },
+  });
+
+  try {
+    const preference = await createCheckoutPreference(
+      {
+        topUpId: topUp.id,
+        clientId: client.id,
+        amountMxn: amount,
+        payerEmail: params.payerEmail || client.user.email,
+      },
+      fetchImpl,
+    );
+    await prisma.walletTopUp.update({
+      where: { id: topUp.id },
+      data: { preferenceId: preference.id },
+    });
+    return { topUpId: topUp.id, checkoutUrl: preference.checkoutUrl };
+  } catch (error) {
+    await prisma.walletTopUp.update({
+      where: { id: topUp.id },
+      data: { status: "FAILED" },
+    });
+    throw error;
+  }
 }
 
 export async function processWalletTopUpPayment(
