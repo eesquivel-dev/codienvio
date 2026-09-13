@@ -10,9 +10,14 @@ const CLIENT_FACING_FILES = [
   "src/app/portal/page.tsx",
   "src/app/portal/saldo/page.tsx",
   "src/app/portal/envios/page.tsx",
+  "src/app/portal/libreta/page.tsx",
+  "src/app/portal/libreta/address-book.tsx",
+  "src/app/portal/libreta/package-presets.tsx",
   "src/app/portal/saldo/top-up-form.tsx",
   "src/components/quote-form.tsx",
+  "src/components/quote-preset-bar.tsx",
   "src/components/brand-mark.tsx",
+  "src/lib/saved-presets.ts",
   "public/openapi.yaml",
 ] as const;
 

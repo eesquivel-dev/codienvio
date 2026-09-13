@@ -29,6 +29,8 @@ export const clientCopy = {
     `Precios en MXN, de menor a mayor. Se cobran de tu saldo (${balanceLabel}).`,
   saldoLead:
     "Recarga tu saldo Código Envío con Mercado Pago: paga aquí (tarjeta, OXXO o SPEI) o con tu cuenta de Mercado Pago. Úsalo para comprar guías cuando las necesites.",
+  libretaLead:
+    "Guarda direcciones y paquetes para reutilizarlos al cotizar. El alias te ayuda a reconocerlos en el formulario.",
   docsLead:
     "Autenticación con API key por cliente. Cotiza, compra guías y consulta envíos. Las respuestas incluyen el precio en MXN.",
   docsBuyLead:

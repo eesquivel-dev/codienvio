@@ -21,6 +21,7 @@ export default async function PortalLayout({ children }: { children: React.React
         items={[
           { href: "/portal", label: "Inicio" },
           { href: "/portal/saldo", label: "Saldo" },
+          { href: "/portal/libreta", label: "Libreta" },
           { href: "/portal/envios", label: "Mis envíos" },
           { href: "/docs", label: "API" },
         ]}

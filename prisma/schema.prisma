@@ -63,8 +63,61 @@ model Client {
   walletTxns      WalletTransaction[]
   walletTopUps    WalletTopUp[]
   billingPeriods  BillingPeriod[]
+  savedAddresses  SavedAddress[]
+  savedPackages   SavedPackage[]
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+}
+
+enum SavedAddressType {
+  ORIGIN
+  DESTINATION
+  BOTH
+}
+
+/// Client address book — origin/destination contacts reused in the quote flow.
+model SavedAddress {
+  id         String           @id @default(cuid())
+  clientId   String
+  client     Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  label      String
+  type       SavedAddressType @default(BOTH)
+  name       String
+  company    String           @default("")
+  phone      String
+  email      String           @default("")
+  street     String
+  number     String           @default("")
+  district   String           @default("")
+  city       String
+  state      String
+  postalCode String
+  country    String           @default("MX")
+  reference  String           @default("")
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([clientId, updatedAt])
+  @@index([clientId, type])
+}
+
+/// Client package presets reused in the quote flow.
+model SavedPackage {
+  id               String   @id @default(cuid())
+  clientId         String
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  nickname         String
+  type             String   @default("box")
+  content          String
+  weightKg         Decimal  @db.Decimal(8, 2)
+  lengthCm         Decimal  @db.Decimal(8, 1)
+  widthCm          Decimal  @db.Decimal(8, 1)
+  heightCm         Decimal  @db.Decimal(8, 1)
+  declaredValueMxn Decimal  @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([clientId, updatedAt])
 }
 
 model ApiKey {

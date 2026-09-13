@@ -13,30 +13,25 @@ type BrandMarkProps = {
 const HEIGHT = { sm: 28, md: 36, lg: 56 } as const;
 
 /**
- * Official Código Envío lockup.
- * On navy chrome the mark sits on a white field so lima + navy stay visible.
- * Do not distort, recolor, or recompose the lockup.
+ * Official Código Envío lockup on a transparent field.
+ * Light chrome: lima + navy. Navy chrome: lima + white knockout.
+ * Do not sit the mark on a white plate, distort, or recolor it in CSS.
  */
 export function BrandMark({ href, variant = "on-light", size = "md", className }: BrandMarkProps) {
   const height = HEIGHT[size];
   const width = Math.round(height * LOGO_ASPECT);
   const onDark = variant === "on-dark";
+  const src = onDark ? brand.logo.lockupOnDark : brand.logo.lockup;
 
   const mark = (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center",
-        onDark && "rounded-md bg-white px-2 py-1 shadow-sm",
-        className,
-      )}
-    >
+    <span className={cn("inline-flex shrink-0 items-center bg-transparent", className)}>
       <Image
-        src={brand.logo.lockup}
+        src={src}
         alt={brand.name}
         width={width}
         height={height}
-        className="h-auto w-auto max-w-none"
-        style={{ height, width: "auto" }}
+        className="h-auto w-auto max-w-none bg-transparent"
+        style={{ height, width: "auto", backgroundColor: "transparent" }}
         priority
       />
     </span>
@@ -44,7 +39,7 @@ export function BrandMark({ href, variant = "on-light", size = "md", className }
 
   if (!href) return mark;
   return (
-    <Link href={href} className="inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lima">
+    <Link href={href} className="inline-flex rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lima">
       {mark}
     </Link>
   );
