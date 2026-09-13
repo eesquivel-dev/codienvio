@@ -13,8 +13,10 @@ export const brand = {
   typeWeights: [400, 500, 600, 700, 800] as const,
   logo: {
     lockup: "/brand/codigo-envio-lockup.png",
+    lockupOnDark: "/brand/codigo-envio-lockup-on-dark.png",
     color: "/brand/logo-color.png",
     icon: "/brand/codigo-envio-icon.png",
+    iconOnDark: "/brand/codigo-envio-icon-on-dark.png",
   },
 } as const;
 

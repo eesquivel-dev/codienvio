@@ -3,6 +3,8 @@ import {
   adjustBalanceSchema,
   markBillingPeriodSchema,
   quoteRequestSchema,
+  savedAddressInputSchema,
+  savedPackageInputSchema,
   updateClientSchema,
   walletTopUpSchema,
 } from "@/lib/validations";
@@ -102,6 +104,37 @@ describe("updateClientSchema", () => {
         feeFixedMxn: "0",
       }),
     ).toMatchObject({ companyName: "Tienda Norte", feePercent: 18, feeFixedMxn: 0 });
+  });
+});
+
+describe("savedAddressInputSchema", () => {
+  it("pide alias y acepta tipo origen/destino/ambos", () => {
+    const parsed = savedAddressInputSchema.parse({
+      ...valid.origin,
+      label: "Bodega CDMX",
+      type: "ORIGIN",
+    });
+    expect(parsed).toMatchObject({ label: "Bodega CDMX", type: "ORIGIN", state: "CX" });
+  });
+
+  it("rechaza alias corto", () => {
+    expect(() =>
+      savedAddressInputSchema.parse({
+        ...valid.origin,
+        label: "A",
+      }),
+    ).toThrow(/alias/i);
+  });
+});
+
+describe("savedPackageInputSchema", () => {
+  it("acepta un preset de caja", () => {
+    expect(
+      savedPackageInputSchema.parse({
+        nickname: "Caja ropa",
+        ...valid.packages[0],
+      }),
+    ).toMatchObject({ nickname: "Caja ropa", type: "box", weightKg: 0.5 });
   });
 });
 

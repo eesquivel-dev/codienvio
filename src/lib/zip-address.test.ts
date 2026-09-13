@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeMxState } from "@/lib/mexico";
+import { mxStateName, normalizeMxState } from "@/lib/mexico";
 import {
   applyZipLookup,
   isCompletePostalCode,
@@ -85,5 +85,12 @@ describe("normalizeMxState", () => {
     expect(normalizeMxState("MX-CMX")).toBe("CX");
     expect(normalizeMxState("NLE")).toBe("NL");
     expect(normalizeMxState("cx")).toBe("CX");
+  });
+});
+
+describe("mxStateName", () => {
+  it("devuelve el nombre largo del estado", () => {
+    expect(mxStateName("nl")).toBe("Nuevo León");
+    expect(mxStateName("CX")).toBe("Ciudad de México");
   });
 });

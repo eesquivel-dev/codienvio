@@ -19,6 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
+import {
+  formatSavedAddressLine,
+  formatSavedPackageLine,
+  packageTypeLabel,
+  savedAddressTypeLabel,
+  type SavedAddressDTO,
+  type SavedPackageDTO,
+} from "@/lib/saved-presets";
 import type { WalletLedgerRow } from "@/lib/wallet-copy";
 
 export type AdminClientKey = {
@@ -42,6 +50,8 @@ export type AdminClientRow = {
   createdAt: string;
   ledger: WalletLedgerRow[];
   keys: AdminClientKey[];
+  savedAddresses: SavedAddressDTO[];
+  savedPackages: SavedPackageDTO[];
 };
 
 export function ClientsManager({
@@ -425,6 +435,55 @@ function ClientDrawer({
           >
             Generar API key
           </Button>
+        </div>
+
+        <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+          <p className="type-overline text-muted-foreground">Libreta del cliente</p>
+          <p className="text-xs text-muted-foreground">
+            Solo lectura. El cliente administra direcciones y paquetes en el portal.
+          </p>
+          {client.savedAddresses.length === 0 && client.savedPackages.length === 0 ? (
+            <p className="text-muted-foreground">Sin direcciones ni paquetes guardados.</p>
+          ) : (
+            <div className="space-y-3">
+              {client.savedAddresses.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-navy">Direcciones ({client.savedAddresses.length})</p>
+                  <ul className="space-y-2">
+                    {client.savedAddresses.map((address) => (
+                      <li key={address.id} className="rounded-md border border-navy/10 bg-white p-2">
+                        <p className="font-medium">
+                          {address.label}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            · {savedAddressTypeLabel(address.type)}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatSavedAddressLine(address)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {client.savedPackages.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-navy">Paquetes ({client.savedPackages.length})</p>
+                  <ul className="space-y-2">
+                    {client.savedPackages.map((item) => (
+                      <li key={item.id} className="rounded-md border border-navy/10 bg-white p-2">
+                        <p className="font-medium">
+                          {item.nickname}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            · {packageTypeLabel(item.type)}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatSavedPackageLine(item)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
     </CatalogDrawer>

@@ -4,6 +4,7 @@ import { asMoney, formatMxn } from "@/lib/money";
 import { getDefaultFeeRule } from "@/lib/settings";
 import { ClientsManager } from "@/app/admin/clientes/clients-manager";
 import { PageHeader } from "@/components/page-header";
+import { toSavedAddressDTO, toSavedPackageDTO } from "@/lib/saved-presets";
 
 export default async function ClientsPage() {
   await requireAdmin();
@@ -14,6 +15,8 @@ export default async function ClientsPage() {
         user: true,
         apiKeys: { orderBy: { createdAt: "desc" } },
         walletTxns: { orderBy: { createdAt: "desc" }, take: 8 },
+        savedAddresses: { orderBy: { updatedAt: "desc" } },
+        savedPackages: { orderBy: { updatedAt: "desc" } },
       },
     }),
     getDefaultFeeRule(),
@@ -47,6 +50,8 @@ export default async function ClientsPage() {
             shipmentId: row.shipmentId,
             createdAt: row.createdAt.toISOString(),
           })),
+          savedAddresses: client.savedAddresses.map(toSavedAddressDTO),
+          savedPackages: client.savedPackages.map(toSavedPackageDTO),
           keys: client.apiKeys.map((key) => ({
             id: key.id,
             name: key.name,

@@ -3,9 +3,15 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Loader2, Package, Sparkles } from "lucide-react";
-import { buyAction, quoteAction } from "@/app/portal/actions";
+import {
+  buyAction,
+  createSavedAddressAction,
+  createSavedPackageAction,
+  quoteAction,
+} from "@/app/portal/actions";
 import { Field } from "@/components/field";
 import { NativeSelect } from "@/components/native-select";
+import { AddressPresetBar, PackagePresetBar } from "@/components/quote-preset-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +19,12 @@ import { Input } from "@/components/ui/input";
 import { carrierLabel, formatTimeMx } from "@/lib/format";
 import { MX_STATES } from "@/lib/mexico";
 import { asMoney, formatMxn } from "@/lib/money";
+import {
+  toAddressFormFields,
+  toPackageFormFields,
+  type SavedAddressDTO,
+  type SavedPackageDTO,
+} from "@/lib/saved-presets";
 import { canAfford, insufficientBalanceMessage } from "@/lib/wallet-copy";
 import type { ZipLookup } from "@/lib/providers/types";
 import { cn } from "@/lib/utils";
@@ -94,11 +106,23 @@ function fieldError(errors: Record<string, string>, ...keys: string[]) {
   return keys.map((key) => errors[key]).find(Boolean);
 }
 
-export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: number }) {
+export function QuoteForm({
+  balanceMxn: initialBalanceMxn,
+  savedAddresses: initialAddresses = [],
+  savedPackages: initialPackages = [],
+}: {
+  balanceMxn: number;
+  savedAddresses?: SavedAddressDTO[];
+  savedPackages?: SavedPackageDTO[];
+}) {
   const [balanceMxn, setBalanceMxn] = useState(initialBalanceMxn);
+  const [addresses, setAddresses] = useState(initialAddresses);
+  const [packages, setPackages] = useState(initialPackages);
+  const [savingPreset, setSavingPreset] = useState<"origin" | "destination" | "package" | null>(null);
   const [origin, setOrigin] = useState<AddressState>(emptyAddress("CX"));
   const [destination, setDestination] = useState<AddressState>(emptyAddress("NL"));
   const [pkg, setPkg] = useState({
+    type: "box" as SavedPackageDTO["type"],
     content: "",
     weightKg: "",
     lengthCm: "",
@@ -122,7 +146,7 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
       destination: { ...destination, country: "MX" as const },
       packages: [
         {
-          type: "box" as const,
+          type: pkg.type,
           content: pkg.content,
           weightKg: Number(pkg.weightKg),
           lengthCm: Number(pkg.lengthCm),
@@ -142,6 +166,61 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
   useEffect(() => {
     setBalanceMxn(initialBalanceMxn);
   }, [initialBalanceMxn]);
+
+  useEffect(() => {
+    setAddresses(initialAddresses);
+  }, [initialAddresses]);
+
+  useEffect(() => {
+    setPackages(initialPackages);
+  }, [initialPackages]);
+
+  async function saveAddress(role: "origin" | "destination", input: { label: string; type: SavedAddressDTO["type"] }) {
+    const value = role === "origin" ? origin : destination;
+    setSavingPreset(role);
+    setError(null);
+    try {
+      const result = await createSavedAddressAction({
+        ...value,
+        country: "MX" as const,
+        label: input.label,
+        type: input.type,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return false;
+      }
+      setAddresses((prev) => [result.address, ...prev.filter((item) => item.id !== result.address.id)]);
+      return true;
+    } finally {
+      setSavingPreset(null);
+    }
+  }
+
+  async function savePackage(input: { nickname: string }) {
+    setSavingPreset("package");
+    setError(null);
+    try {
+      const result = await createSavedPackageAction({
+        nickname: input.nickname,
+        type: pkg.type,
+        content: pkg.content,
+        weightKg: Number(pkg.weightKg),
+        lengthCm: Number(pkg.lengthCm),
+        widthCm: Number(pkg.widthCm),
+        heightCm: Number(pkg.heightCm),
+        declaredValueMxn: Number(pkg.declaredValueMxn),
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return false;
+      }
+      setPackages((prev) => [result.package, ...prev.filter((item) => item.id !== result.package.id)]);
+      return true;
+    } finally {
+      setSavingPreset(null);
+    }
+  }
 
   function validateLocal() {
     const parsed = quoteRequestSchema.safeParse(payload);
@@ -240,6 +319,10 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
           prefix="origin"
           errors={fieldErrors}
           onChange={setOrigin}
+          savedAddresses={addresses}
+          saving={savingPreset === "origin"}
+          onApplySaved={(item) => setOrigin(toAddressFormFields(item))}
+          onSaveSaved={(input) => saveAddress("origin", input)}
         />
         <div className="hidden pt-16 lg:flex">
           <ArrowRight className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -251,6 +334,10 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
           prefix="destination"
           errors={fieldErrors}
           onChange={setDestination}
+          savedAddresses={addresses}
+          saving={savingPreset === "destination"}
+          onApplySaved={(item) => setDestination(toAddressFormFields(item))}
+          onSaveSaved={(input) => saveAddress("destination", input)}
         />
       </div>
 
@@ -265,6 +352,25 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="sm:col-span-2 lg:col-span-6">
+            <PackagePresetBar
+              packages={packages}
+              saving={savingPreset === "package"}
+              onApply={(item) => setPkg(toPackageFormFields(item))}
+              onSave={savePackage}
+            />
+          </div>
+          <Field label="Tipo" htmlFor="pkg-type">
+            <NativeSelect
+              id="pkg-type"
+              value={pkg.type}
+              onChange={(e) => setPkg({ ...pkg, type: e.target.value as SavedPackageDTO["type"] })}
+            >
+              <option value="box">Caja</option>
+              <option value="envelope">Sobre</option>
+              <option value="pallet">Tarima</option>
+            </NativeSelect>
+          </Field>
           <Field
             label="Contenido"
             htmlFor="content"
@@ -373,6 +479,7 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
             setOrigin(demoOrigin);
             setDestination(demoDestination);
             setPkg({
+              type: "box",
               content: "Ropa",
               weightKg: "0.5",
               lengthCm: "30",
@@ -394,6 +501,7 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
             setOrigin(emptyAddress("CX"));
             setDestination(emptyAddress("NL"));
             setPkg({
+              type: "box",
               content: "",
               weightKg: "",
               lengthCm: "",
@@ -517,6 +625,10 @@ function AddressCard({
   prefix,
   errors,
   onChange,
+  savedAddresses,
+  saving,
+  onApplySaved,
+  onSaveSaved,
 }: {
   title: string;
   description: string;
@@ -524,6 +636,10 @@ function AddressCard({
   prefix: "origin" | "destination";
   errors: Record<string, string>;
   onChange: Dispatch<SetStateAction<AddressState>>;
+  savedAddresses: SavedAddressDTO[];
+  saving?: boolean;
+  onApplySaved: (address: SavedAddressDTO) => void;
+  onSaveSaved: (input: { label: string; type: SavedAddressDTO["type"] }) => Promise<boolean>;
 }) {
   const [zipStatus, setZipStatus] = useState<ZipFieldStatus>("idle");
   const [suburbs, setSuburbs] = useState<string[]>([]);
@@ -603,6 +719,15 @@ function AddressCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <AddressPresetBar
+            role={prefix}
+            addresses={savedAddresses}
+            saving={saving}
+            onApply={onApplySaved}
+            onSave={onSaveSaved}
+          />
+        </div>
         <Field
           label="C.P."
           htmlFor={`${prefix}-zip`}

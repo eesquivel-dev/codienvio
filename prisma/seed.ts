@@ -18,6 +18,57 @@ const DEMO_CLIENT_PASSWORD = "Cliente1234!";
 const DEFAULT_FEE_PERCENT = 20;
 const DEFAULT_FEE_FIXED_MXN = 0;
 
+async function upsertDemoAddress(
+  clientId: string,
+  data: {
+    label: string;
+    type: "ORIGIN" | "DESTINATION" | "BOTH";
+    name: string;
+    company: string;
+    phone: string;
+    email: string;
+    street: string;
+    number: string;
+    district: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    reference: string;
+  },
+) {
+  const existing = await prisma.savedAddress.findFirst({
+    where: { clientId, label: data.label },
+  });
+  if (existing) {
+    await prisma.savedAddress.update({ where: { id: existing.id }, data });
+    return;
+  }
+  await prisma.savedAddress.create({ data: { clientId, ...data } });
+}
+
+async function upsertDemoPackage(
+  clientId: string,
+  data: {
+    nickname: string;
+    type: string;
+    content: string;
+    weightKg: number;
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
+    declaredValueMxn: number;
+  },
+) {
+  const existing = await prisma.savedPackage.findFirst({
+    where: { clientId, nickname: data.nickname },
+  });
+  if (existing) {
+    await prisma.savedPackage.update({ where: { id: existing.id }, data });
+    return;
+  }
+  await prisma.savedPackage.create({ data: { clientId, ...data } });
+}
+
 async function main() {
   await prisma.settings.upsert({
     where: { id: "default" },
@@ -81,6 +132,47 @@ async function main() {
       prefix: DEMO_API_KEY.slice(0, 16),
       hash: hashApiKey(DEMO_API_KEY),
     },
+  });
+
+  await upsertDemoAddress(clientId, {
+    label: "Bodega CDMX",
+    type: "ORIGIN",
+    name: "Edgar Esquivel",
+    company: "Tienda Demo MX",
+    phone: "5551234567",
+    email: "edgar@codienvio.mx",
+    street: "Av. Insurgentes Sur",
+    number: "1647",
+    district: "Insurgentes Mixcoac",
+    city: "Ciudad de México",
+    state: "CX",
+    postalCode: "03920",
+    reference: "Local 3",
+  });
+  await upsertDemoAddress(clientId, {
+    label: "Cliente Monterrey",
+    type: "DESTINATION",
+    name: "Ana López",
+    company: "",
+    phone: "8181234567",
+    email: "ana@example.com",
+    street: "Av. Constitución",
+    number: "123",
+    district: "Centro",
+    city: "Monterrey",
+    state: "NL",
+    postalCode: "64060",
+    reference: "",
+  });
+  await upsertDemoPackage(clientId, {
+    nickname: "Caja ropa",
+    type: "box",
+    content: "Ropa",
+    weightKg: 0.5,
+    lengthCm: 30,
+    widthCm: 20,
+    heightCm: 10,
+    declaredValueMxn: 450,
   });
 
   console.log("Seed listo.");

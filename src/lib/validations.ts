@@ -50,6 +50,25 @@ export const purchaseFromQuoteSchema = z.object({
   rateId: z.string().min(1),
 });
 
+export const savedAddressTypeSchema = z.enum(["ORIGIN", "DESTINATION", "BOTH"]);
+
+export const savedAddressInputSchema = addressSchema.extend({
+  label: z.string().trim().min(2, "Ponle un alias a la dirección").max(40),
+  type: savedAddressTypeSchema.default("BOTH"),
+});
+
+export const savedAddressUpdateSchema = savedAddressInputSchema.extend({
+  id: z.string().trim().min(1),
+});
+
+export const savedPackageInputSchema = packageSchema.extend({
+  nickname: z.string().trim().min(2, "Ponle un alias al paquete").max(40),
+});
+
+export const savedPackageUpdateSchema = savedPackageInputSchema.extend({
+  id: z.string().trim().min(1),
+});
+
 export const createClientSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().trim().email(),
@@ -104,3 +123,6 @@ export const settingsSchema = z.object({
 export type AddressInput = z.infer<typeof addressSchema>;
 export type PackageInput = z.infer<typeof packageSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
+export type SavedAddressType = z.infer<typeof savedAddressTypeSchema>;
+export type SavedAddressInput = z.infer<typeof savedAddressInputSchema>;
+export type SavedPackageInput = z.infer<typeof savedPackageInputSchema>;

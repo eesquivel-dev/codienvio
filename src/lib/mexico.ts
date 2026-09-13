@@ -53,3 +53,8 @@ export function normalizeMxState(code: string): string {
 export function isMxState(code: string): boolean {
   return (MX_STATE_CODES as readonly string[]).includes(normalizeMxState(code));
 }
+
+export function mxStateName(code: string): string {
+  const normalized = normalizeMxState(code);
+  return MX_STATES.find((state) => state.code === normalized)?.name ?? normalized;
+}

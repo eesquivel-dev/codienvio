@@ -6,14 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireClient } from "@/lib/auth";
 import { formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
+import { listClientPresets } from "@/lib/saved-presets";
 import { listShipments } from "@/lib/services/shipping";
 import { getClientWallet } from "@/lib/wallet";
 
 export default async function PortalPage() {
   const session = await requireClient();
-  const [shipments, wallet] = await Promise.all([
+  const [shipments, wallet, presets] = await Promise.all([
     listShipments(session.user.clientId!),
     getClientWallet(session.user.clientId!),
+    listClientPresets(session.user.clientId!),
   ]);
   const purchased = shipments.filter((item) => item.status === "PURCHASED");
   const recent = purchased.slice(0, 3);
@@ -36,6 +38,9 @@ export default async function PortalPage() {
               Cotizar envío
               <ArrowRight className="h-4 w-4" />
             </a>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/portal/libreta">Libreta</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link href="/portal/envios">Ver historial</Link>
@@ -104,10 +109,15 @@ export default async function PortalPage() {
           <h2 className="type-title text-navy">Cotizar envío</h2>
           <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
           <p className="type-body mt-2 text-muted-foreground">
-            Completa origen, destino y medidas. Si solo quieres probar, usa el ejemplo CDMX → MTY.
+            Completa origen, destino y medidas. Reutiliza tu libreta o, si solo quieres probar, el
+            ejemplo CDMX → MTY.
           </p>
         </div>
-        <QuoteForm balanceMxn={wallet.balanceMxn} />
+        <QuoteForm
+          balanceMxn={wallet.balanceMxn}
+          savedAddresses={presets.addresses}
+          savedPackages={presets.packages}
+        />
       </section>
     </div>
   );
