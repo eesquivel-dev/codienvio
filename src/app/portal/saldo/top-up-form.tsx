@@ -256,7 +256,7 @@ export function TopUpForm({
         {path === "brick" && topUpId ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-navy">
-              Pagar {formatMxn(lockedAmount ?? amount)} en CodiEnvio
+              Pagar {formatMxn(lockedAmount ?? amount)} en Código Envío
             </p>
             <Button type="button" variant="outline" size="sm" onClick={resetBrick}>
               Cambiar monto

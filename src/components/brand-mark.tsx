@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { brand, LOGO_ASPECT } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
@@ -8,46 +10,35 @@ type BrandMarkProps = {
   className?: string;
 };
 
+const HEIGHT = { sm: 28, md: 36, lg: 56 } as const;
+
 /**
- * Product wordmark — not a CTI lockup.
- * Official logo files belong in /public/brand/ (see README there).
- * Do not invent, distort, recolor, or recompose the CTI mark.
+ * Official Código Envío lockup.
+ * On navy chrome the mark sits on a white field so lima + navy stay visible.
+ * Do not distort, recolor, or recompose the lockup.
  */
 export function BrandMark({ href, variant = "on-light", size = "md", className }: BrandMarkProps) {
+  const height = HEIGHT[size];
+  const width = Math.round(height * LOGO_ASPECT);
   const onDark = variant === "on-dark";
+
   const mark = (
     <span
       className={cn(
-        "inline-flex flex-col leading-none",
-        size === "sm" && "gap-0.5",
-        size === "md" && "gap-1",
-        size === "lg" && "gap-1.5",
+        "inline-flex shrink-0 items-center",
+        onDark && "rounded-md bg-white px-2 py-1 shadow-sm",
         className,
       )}
     >
-      <span
-        className={cn(
-          "font-extrabold tracking-[-0.03em]",
-          size === "sm" && "text-base",
-          size === "md" && "text-lg",
-          size === "lg" && "text-3xl",
-          onDark ? "text-white" : "text-navy",
-        )}
-      >
-        CodiEnvio
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="h-0.5 w-4 shrink-0 bg-lima" aria-hidden />
-        <span
-          className={cn(
-            "type-overline",
-            size === "lg" ? "text-[11px]" : "text-[9px]",
-            onDark ? "text-white/70" : "text-azul-gris",
-          )}
-        >
-          CTI Group
-        </span>
-      </span>
+      <Image
+        src={brand.logo.lockup}
+        alt={brand.name}
+        width={width}
+        height={height}
+        className="h-auto w-auto max-w-none"
+        style={{ height, width: "auto" }}
+        priority
+      />
     </span>
   );
 

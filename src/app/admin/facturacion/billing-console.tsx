@@ -161,7 +161,7 @@ export function BillingConsole({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MiniStat label="Precio cliente" value={formatMxn(totals.clientPrice)} hint={`${totals.salesCount} ventas`} />
-        <MiniStat label="Comisión" value={formatMxn(totals.fee)} hint="Margen reseller" />
+        <MiniStat label="Comisión" value={formatMxn(totals.fee)} hint="Margen operativo" />
         <MiniStat label="Costo Envía" value={formatMxn(totals.providerCost)} hint="Solo admin" />
         <MiniStat
           label="Cargas de saldo"

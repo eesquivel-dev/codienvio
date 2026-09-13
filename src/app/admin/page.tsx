@@ -16,7 +16,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Panel"
-        description="Operación reseller: ventas, margen y catálogos de clientes, integraciones y facturación. El costo de Envía solo se ve aquí."
+        description="Operación: ventas, margen y catálogos de clientes, integraciones y facturación. Costos de paquetería y comisiones solo se ven aquí."
         actions={
           <Button asChild variant="outline">
             <Link href="/admin/configuracion">Ir a configuración</Link>

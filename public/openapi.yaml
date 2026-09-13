@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: CodiEnvio API
+  title: Código Envío API
   version: 1.0.0
   description: |
-    Revendedor de guías Envia.com (México). Autenticación por API key de cliente.
-    Las respuestas de cliente solo incluyen `price` (MXN). Nunca se expone `provider_cost`.
+    API para cotizar y comprar guías de envío doméstico en México.
+    Autenticación por API key de cliente. Tarifas y envíos se expresan con `price` en MXN.
 servers:
   - url: http://localhost:3000
     description: Local
@@ -56,7 +56,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Shipment"
         "402":
-          description: Saldo prepagado insuficiente. No se llama a Envía.
+          description: Saldo prepagado insuficiente.
   /v1/shipments/{id}:
     get:
       summary: Consultar envío
@@ -164,7 +164,7 @@ components:
           enum: [MXN]
         price:
           type: number
-          description: Precio al cliente (MXN). No incluye desglose de costo Envia.
+          description: Precio de la guía en MXN.
     QuoteResponse:
       type: object
       properties:

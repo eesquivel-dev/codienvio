@@ -23,7 +23,7 @@ export default async function ClientsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Clientes"
-        description="Catálogo de cuentas reseller: empresa, comisión, saldo prepagado y API keys. La key completa solo se muestra una vez."
+        description="Catálogo de cuentas: empresa, comisión, saldo prepagado y API keys. La key completa solo se muestra una vez."
       />
       <ClientsManager
         defaultFeePercent={fees.percent}

@@ -1,4 +1,4 @@
-/** CTI Group Brand Identity Manual v1.0 (July 2026). */
+/** Código Envío lockup — navy + lima sampled from the official mark. */
 export const brand = {
   navy: "#0B1B4B",
   lima: "#C4E000",
@@ -6,8 +6,16 @@ export const brand = {
   grisAzulado: "#8FA0B8",
   grisPapel: "#F6F7F9",
   blanco: "#FFFFFF",
-  name: "CodiEnvio",
-  group: "CTI Group",
+  name: "Código Envío",
+  shortName: "CodiEnvio",
+  group: "Código Envío",
   typeface: "Poppins",
   typeWeights: [400, 500, 600, 700, 800] as const,
+  logo: {
+    lockup: "/brand/codigo-envio-lockup.png",
+    color: "/brand/logo-color.png",
+    icon: "/brand/codigo-envio-icon.png",
+  },
 } as const;
+
+export const LOGO_ASPECT = 2000 / 516;

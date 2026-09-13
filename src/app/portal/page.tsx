@@ -21,14 +21,14 @@ export default async function PortalPage() {
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-lg border border-navy/10 bg-card p-6 shadow-sm sm:p-8">
-        <p className="type-overline text-lima">Portal CodiEnvio</p>
+        <p className="type-overline text-lima">Portal Código Envío</p>
         <h1 className="type-display-sm mt-2 text-navy">
           Hola{session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}
         </h1>
         <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
         <p className="type-body mt-3 max-w-2xl text-muted-foreground">
-          Cotiza un envío doméstico, compara paqueterías y compra la guía. El precio es final en
-          MXN; el costo de Envia no se muestra.
+          Cotiza un envío doméstico, compara paqueterías y compra tu guía. Precios claros en MXN,
+          saldo listo y rastreo en un solo lugar.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild size="lg">

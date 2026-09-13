@@ -418,8 +418,7 @@ export function QuoteForm({ balanceMxn: initialBalanceMxn }: { balanceMxn: numbe
           <CardHeader>
             <CardTitle>Compara tarifas</CardTitle>
             <CardDescription>
-              Precio final en MXN, de menor a mayor. Incluye comisión; el costo de Envia no se
-              muestra. Se cobra de tu saldo prepagado ({formatMxn(balanceMxn)}).
+              Precios en MXN, de menor a mayor. Se cobran de tu saldo ({formatMxn(balanceMxn)}).
               {expiresAt ? ` Vigente hasta las ${formatTimeMx(expiresAt)}.` : null}
             </CardDescription>
           </CardHeader>

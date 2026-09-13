@@ -1,8 +1,8 @@
-# CodiEnvio
+# Código Envío (CodiEnvio)
 
-Revendedor de guías de envío para **México**, integrado con **Envia.com**. Edgar cotiza y compra con su cuenta negociada; los clientes ven solo el **precio final** (comisión incluida) en el portal web o la API REST.
+Plataforma para cotizar, comparar y comprar guías de envío doméstico en **México**. El portal y la API muestran precios claros en MXN. El operador administra clientes, saldo, tarifas e integraciones desde el admin.
 
-Cada cliente tiene **saldo prepagado en MXN**. El admin puede cargarlo a mano y el cliente puede recargarlo desde el portal con **Mercado Pago**: Payment Brick en la página (tarjeta / OXXO / SPEI) o Checkout Pro (cuenta Mercado Pago). CodiEnvio cobra `clientPrice` de ese saldo al comprar una guía y paga a Envía desde el monedero de la plataforma. Fuera de alcance: CFDI de la recarga, recarga automática del monedero Envía, iVoy en vivo y monedas distintas a MXN. Hay un hook de proveedor `iVoy` para más adelante.
+Cada cliente tiene **saldo prepagado en MXN**. El admin puede cargarlo a mano y el cliente puede recargarlo desde el portal con **Mercado Pago**: Payment Brick en la página (tarjeta / OXXO / SPEI) o Checkout Pro (cuenta Mercado Pago). Al comprar una guía se cobra `clientPrice` de ese saldo. Fuera de alcance: CFDI de la recarga, recarga automática del monedero del operador, iVoy en vivo y monedas distintas a MXN. Hay un hook de proveedor `iVoy` para más adelante.
 
 ## Stack
 
@@ -10,16 +10,16 @@ Cada cliente tiene **saldo prepagado en MXN**. El admin puede cargarlo a mano y 
 - PostgreSQL + Prisma
 - Tailwind CSS + componentes estilo shadcn/ui
 - NextAuth (correo/contraseña) y API keys Bearer
-- UI en **es-MX**, identidad visual **CTI Group** (Manual v1.0)
+- UI en **es-MX**, marca comercial **Código Envío** (navy + lima)
 
 ## Identidad de marca
 
-Paleta y tipografía según el *Manual de Identidad Corporativa CTI Group v1.0* (julio 2026):
+Lockup oficial **CÓDIGO ENVÍO** (wordmark lima + navy, isotipo de camión). Paleta tomada del mark:
 
 | Token | Hex | Uso |
 | ----- | --- | --- |
-| Navy CTI | `#0B1B4B` | Dominante (encabezados, texto) |
-| Lima CTI | `#C4E000` | Acento (CTAs, datos clave, marca) |
+| Navy | `#0B1B4B` | Dominante (encabezados, texto) |
+| Lima | `#C4E000` | Acento (CTAs, datos clave, marca) |
 | Navy claro | `#1F3E8C` | Fondos y gráficos |
 | Gris azulado | `#8FA0B8` | Texto secundario |
 | Gris papel | `#F6F7F9` | Fondos alternos |
@@ -27,7 +27,12 @@ Paleta y tipografía según el *Manual de Identidad Corporativa CTI Group v1.0* 
 
 Tipografía: **Poppins** (Bold / SemiBold / Medium / Regular). Fallback Arial / Liberation Sans.
 
-Logotipos oficiales: colocar SVG/PNG aprobados en `public/brand/`. Hasta entonces se usa un wordmark de texto **CodiEnvio** + subtítulo CTI Group (sin inventar el isotipo).
+Assets en `public/brand/`:
+
+- `codigo-envio-lockup.png` — lockup primario (también `logo-color.png`)
+- `codigo-envio-icon.png` — isotipo del camión
+
+El copy de cliente habla de cotizar, comparar y comprar guías. No usa lenguaje de reventa ni de convenios detrás de escena.
 
 ## Arquitectura de proveedores
 
