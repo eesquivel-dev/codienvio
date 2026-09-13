@@ -17,13 +17,13 @@ export default function DocsPage() {
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-12">
         <div>
           <Link href="/" className="text-sm text-muted-foreground hover:underline">
-            ← CodiEnvio
+            ← Código Envío
           </Link>
           <h1 className="type-display-sm mt-2 text-navy">API pública v1</h1>
           <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
           <p className="type-body mt-2 text-muted-foreground">
-            Autenticación con API key por cliente. El token de Envia nunca viaja al cliente. Las
-            respuestas solo incluyen <code>price</code> (MXN), nunca el costo del proveedor.
+            Autenticación con API key por cliente. Cotiza, compra guías y consulta envíos. Las
+            respuestas incluyen el <code>price</code> en MXN.
           </p>
           <p className="mt-2 text-sm">
             OpenAPI:{" "}
@@ -94,8 +94,8 @@ export default function DocsPage() {
           <CardHeader>
             <CardTitle>POST /v1/shipments</CardTitle>
             <CardDescription>
-              Compra la guía a partir de quoteId + rateId. Se cobra el precio de venta del saldo
-              prepagado del cliente. Si no alcanza, responde 402 y no llama a Envía.
+              Compra la guía a partir de quoteId + rateId. Se cobra de tu saldo prepagado. Si no
+              alcanza, responde 402.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { AppError } from "@/lib/errors";
+import { clientCopy } from "@/lib/brand-copy";
 import { asMoney } from "@/lib/money";
 
 const MP_API_BASE = "https://api.mercadopago.com";
@@ -196,8 +197,8 @@ export async function createCheckoutPreference(
       items: [
         {
           id: "codienvio-wallet-topup",
-          title: "Recarga de saldo CodiEnvio",
-          description: "Saldo prepagado para comprar guías. No incluye el monedero Envía del operador.",
+          title: clientCopy.mpItemTitle,
+          description: clientCopy.mpItemDescription,
           quantity: 1,
           currency_id: "MXN",
           unit_price: amount,
@@ -343,7 +344,7 @@ export async function createMercadoPagoPayment(
 
   const body: Record<string, unknown> = {
     transaction_amount: amount,
-    description: "Recarga de saldo CodiEnvio",
+    description: clientCopy.mpItemTitle,
     payment_method_id: form.payment_method_id,
     payer: {
       email: payerEmail,

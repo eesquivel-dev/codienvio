@@ -87,7 +87,7 @@ export default async function PortalSaldoPage({
     <div className="space-y-6">
       <PageHeader
         title="Saldo"
-        description="Recarga tu saldo CodiEnvio con Mercado Pago: paga aquí (tarjeta, OXXO o SPEI) o con tu cuenta de Mercado Pago. Este dinero cubre el precio de venta de las guías; el operador paga Envía por separado."
+        description="Recarga tu saldo Código Envío con Mercado Pago: paga aquí (tarjeta, OXXO o SPEI) o con tu cuenta de Mercado Pago. Úsalo para comprar guías cuando las necesites."
         actions={
           <Button asChild variant="outline">
             <Link href="/portal#cotizar">Cotizar envío</Link>

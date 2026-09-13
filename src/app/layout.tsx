@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { clientCopy } from "@/lib/brand-copy";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -17,8 +18,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodiEnvio",
-  description: "Cotiza y compra guías de envío doméstico en México. Precio final en MXN.",
+  title: {
+    default: clientCopy.metadataTitle,
+    template: `%s · ${clientCopy.productName}`,
+  },
+  description: clientCopy.metadataDescription,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

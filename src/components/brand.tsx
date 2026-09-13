@@ -2,7 +2,7 @@ import { BrandMark } from "@/components/brand-mark";
 
 export { BrandMark };
 
-/** Contextual lockup: official CodiEnvio wordmark + optional page subtitle. */
+/** Official lockup plus an optional page subtitle. */
 export function BrandLockup({
   subtitle,
   size = "md",

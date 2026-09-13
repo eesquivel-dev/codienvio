@@ -59,7 +59,7 @@ export function AppHeader({
             role === "CLIENT" ? (
               <Link
                 href="/portal/saldo"
-                className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy hover:bg-[#b0c900]"
+                className="rounded-full bg-lima px-2.5 py-1 text-xs font-semibold text-navy hover:bg-[color:var(--lima-hover)]"
               >
                 Saldo {balanceLabel}
               </Link>

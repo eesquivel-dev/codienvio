@@ -1,14 +1,12 @@
-# Official CTI Group logo assets
+# Código Envío — brand assets
 
-Drop approved lockups from **CTI Group Brand Identity Manual v1.0** here.
+Official lockup. Do not distort, recolor, rotate, add shadows, or recompose the mark.
 
-Expected filenames (do not invent a mark):
+| File | Use |
+| ---- | --- |
+| `codigo-envio-lockup.png` | Primary lockup (CÓDIGO lima + ENVÍO navy + truck) |
+| `logo-color.png` | Same lockup (stable filename for the color mark) |
+| `codigo-envio-icon.png` | Truck isotipo (favicon / compact) |
+| `codigo-envio-icon-256.png` | 256px truck isotipo |
 
-- `logo-color.svg` / `logo-color.png` — navy + lima on white (preferred)
-- `logo-on-navy.svg` / `logo-on-navy.png` — color on navy
-- `logo-mono-navy.svg` — one-ink navy
-- `logo-mono-white.svg` — white on color/photo
-
-Rules from the manual: do not distort, recolor arbitrarily, rotate, add shadows/effects, or recompose the lockup.
-
-Until official files are added, the UI uses a **CodiEnvio** text wordmark with a **CTI Group** subtitle — not a facsimile of the CTI ring mark.
+On navy chrome, sit the lockup on a white field so both inks stay visible.
