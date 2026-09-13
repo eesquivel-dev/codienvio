@@ -6,7 +6,7 @@ import { errorToResponse } from "@/lib/errors";
 import { createQuote, purchaseFromQuote } from "@/lib/services/shipping";
 import { quoteRequestSchema } from "@/lib/validations";
 import { getClientWallet } from "@/lib/wallet";
-import { createWalletTopUpCheckout } from "@/lib/wallet-topup";
+import { createWalletTopUpIntent, processWalletTopUpPayment } from "@/lib/wallet-topup";
 
 export async function quoteAction(input: unknown) {
   try {
@@ -37,12 +37,35 @@ export async function buyAction(quoteId: string, rateId: string) {
 export async function startWalletTopUpAction(amountMxn: number) {
   try {
     const session = await requireClient();
-    const checkout = await createWalletTopUpCheckout({
+    const intent = await createWalletTopUpIntent({
       clientId: session.user.clientId!,
       amountMxn,
+    });
+    return { ok: true as const, topUpId: intent.topUpId, amountMxn: intent.amountMxn };
+  } catch (error) {
+    const { body } = errorToResponse(error);
+    return { ok: false as const, error: body.error.message };
+  }
+}
+
+export async function processWalletTopUpPaymentAction(input: { topUpId: string; formData: unknown }) {
+  try {
+    const session = await requireClient();
+    const result = await processWalletTopUpPayment({
+      clientId: session.user.clientId!,
+      topUpId: input.topUpId,
+      formData: input.formData,
       payerEmail: session.user.email,
     });
-    return { ok: true as const, checkoutUrl: checkout.checkoutUrl };
+    return {
+      ok: true as const,
+      paymentId: result.paymentId,
+      paymentStatus: result.paymentStatus,
+      credited: result.credited,
+      alreadyCredited: result.alreadyCredited,
+      balanceMxn: result.balanceMxn,
+      amountMxn: result.amountMxn,
+    };
   } catch (error) {
     const { body } = errorToResponse(error);
     return { ok: false as const, error: body.error.message };

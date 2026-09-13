@@ -33,8 +33,10 @@ import { AppError } from "@/lib/errors";
 import {
   applyMercadoPagoPayment,
   assertApprovedTopUpPayment,
+  createWalletTopUpIntent,
   creditApprovedMercadoPagoTopUp,
   parseTopUpAmountMxn,
+  processWalletTopUpPayment,
 } from "@/lib/wallet-topup";
 
 describe("parseTopUpAmountMxn", () => {
@@ -223,6 +225,183 @@ describe("applyMercadoPagoPayment", () => {
     expect(result.credited).toBe(false);
     expect(result.alreadyCredited).toBe(false);
     expect(result.paymentStatus).toBe("pending");
+    expect(prismaMocks.walletTransaction.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("createWalletTopUpIntent", () => {
+  const previous = {
+    token: process.env.MERCADOPAGO_ACCESS_TOKEN,
+    publicKey: process.env.MERCADOPAGO_PUBLIC_KEY,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.MERCADOPAGO_ACCESS_TOKEN = "TEST-token";
+    process.env.MERCADOPAGO_PUBLIC_KEY = "APP_USR-pub";
+  });
+
+  afterEach(() => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = previous.token;
+    process.env.MERCADOPAGO_PUBLIC_KEY = previous.publicKey;
+  });
+
+  it("crea una recarga pendiente sin Checkout Pro", async () => {
+    prismaMocks.client.findUnique.mockResolvedValue({ id: "c1", active: true });
+    prismaMocks.walletTopUp.create.mockResolvedValue({ id: "top1", amountMxn: 500 });
+
+    const result = await createWalletTopUpIntent({ clientId: "c1", amountMxn: 500 });
+    expect(result).toEqual({ topUpId: "top1", amountMxn: 500 });
+    expect(prismaMocks.walletTopUp.create).toHaveBeenCalledWith({
+      data: { clientId: "c1", amountMxn: 500, status: "PENDING" },
+    });
+  });
+
+  it("exige public key para el Brick", async () => {
+    delete process.env.MERCADOPAGO_PUBLIC_KEY;
+    await expect(createWalletTopUpIntent({ clientId: "c1", amountMxn: 500 })).rejects.toThrow(
+      /MERCADOPAGO_PUBLIC_KEY/,
+    );
+  });
+});
+
+describe("processWalletTopUpPayment", () => {
+  const previousToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.MERCADOPAGO_ACCESS_TOKEN = "TEST-token";
+    prismaMocks.prisma.$transaction.mockImplementation(
+      async (fn: (tx: typeof prismaMocks.prisma) => Promise<unknown>) => fn(prismaMocks.prisma),
+    );
+  });
+
+  afterEach(() => {
+    process.env.MERCADOPAGO_ACCESS_TOKEN = previousToken;
+  });
+
+  function mpJson(overrides: Record<string, unknown> = {}) {
+    return {
+      ok: true,
+      json: async () => ({
+        id: 99,
+        status: "approved",
+        transaction_amount: 500,
+        currency_id: "MXN",
+        external_reference: "top1",
+        metadata: { client_id: "c1" },
+        ...overrides,
+      }),
+    };
+  }
+
+  function approvedTopUp() {
+    prismaMocks.walletTopUp.findUnique.mockResolvedValue({
+      id: "top1",
+      clientId: "c1",
+      amountMxn: new Prisma.Decimal("500"),
+      status: "PENDING",
+      mercadopagoPaymentId: null,
+    });
+    prismaMocks.walletTopUp.update.mockResolvedValue({});
+    prismaMocks.walletTransaction.findUnique.mockResolvedValue(null);
+    prismaMocks.walletTransaction.create.mockResolvedValue({ id: "txn1" });
+    prismaMocks.client.update.mockResolvedValue({ balanceMxn: new Prisma.Decimal("500") });
+  }
+
+  it("procesa el Brick, acredita una vez y el webhook no vuelve a creditar", async () => {
+    approvedTopUp();
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(mpJson())
+      .mockResolvedValue(mpJson());
+
+    const first = await processWalletTopUpPayment(
+      {
+        clientId: "c1",
+        topUpId: "top1",
+        formData: {
+          token: "tok_card",
+          payment_method_id: "visa",
+          installments: 1,
+          transaction_amount: 1,
+          payer: { email: "cliente@demo.mx" },
+        },
+        payerEmail: "cliente@demo.mx",
+      },
+      fetchImpl as unknown as typeof fetch,
+    );
+    expect(first.credited).toBe(true);
+    expect(first.paymentStatus).toBe("approved");
+    expect(prismaMocks.walletTransaction.create).toHaveBeenCalledTimes(1);
+
+    const createBody = JSON.parse(String(fetchImpl.mock.calls[0][1].body)) as { transaction_amount: number };
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://api.mercadopago.com/v1/payments");
+    expect(createBody.transaction_amount).toBe(500);
+
+    prismaMocks.walletTransaction.findUnique.mockResolvedValue({ id: "txn1", clientId: "c1" });
+    prismaMocks.client.findUnique.mockResolvedValue({ balanceMxn: new Prisma.Decimal("500") });
+
+    const webhook = await applyMercadoPagoPayment("99", fetchImpl as unknown as typeof fetch);
+    expect(webhook.alreadyCredited).toBe(true);
+    expect(webhook.credited).toBe(false);
+    expect(prismaMocks.walletTransaction.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("no acredita un OXXO pendiente y deja el webhook para después", async () => {
+    prismaMocks.walletTopUp.findUnique.mockResolvedValue({
+      id: "top1",
+      clientId: "c1",
+      amountMxn: new Prisma.Decimal("500"),
+      status: "PENDING",
+      mercadopagoPaymentId: null,
+    });
+    prismaMocks.walletTopUp.update.mockResolvedValue({});
+    const fetchImpl = vi.fn().mockResolvedValue(mpJson({ status: "pending" }));
+
+    const result = await processWalletTopUpPayment(
+      {
+        clientId: "c1",
+        topUpId: "top1",
+        formData: { payment_method_id: "oxxo", payer: { email: "cliente@demo.mx" } },
+        payerEmail: "cliente@demo.mx",
+      },
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    expect(result.credited).toBe(false);
+    expect(result.paymentStatus).toBe("pending");
+    expect(prismaMocks.walletTransaction.create).not.toHaveBeenCalled();
+    expect(prismaMocks.walletTopUp.update).toHaveBeenCalledWith({
+      where: { id: "top1" },
+      data: { mercadopagoPaymentId: "99" },
+    });
+  });
+
+  it("reutiliza el payment id ya guardado y no crea otro cargo", async () => {
+    prismaMocks.walletTopUp.findUnique.mockResolvedValue({
+      id: "top1",
+      clientId: "c1",
+      amountMxn: new Prisma.Decimal("500"),
+      status: "PENDING",
+      mercadopagoPaymentId: "99",
+    });
+    prismaMocks.walletTransaction.findUnique.mockResolvedValue({ id: "txn1", clientId: "c1" });
+    prismaMocks.client.findUnique.mockResolvedValue({ balanceMxn: new Prisma.Decimal("500") });
+    const fetchImpl = vi.fn().mockResolvedValue(mpJson());
+
+    const result = await processWalletTopUpPayment(
+      {
+        clientId: "c1",
+        topUpId: "top1",
+        formData: { payment_method_id: "visa", token: "tok_card", payer: { email: "a@b.mx" } },
+      },
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    expect(result.alreadyCredited).toBe(true);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://api.mercadopago.com/v1/payments/99");
     expect(prismaMocks.walletTransaction.create).not.toHaveBeenCalled();
   });
 });
