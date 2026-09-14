@@ -84,6 +84,7 @@ Abre [http://localhost:3000](http://localhost:3000).
 | ------- | ---------------------- | ------------- |
 | Admin   | `admin@codienvio.mx`   | `Admin1234!`  |
 | Cliente | `cliente@demo.mx`      | `Cliente1234!`|
+| Cliente | `bodega@demo.mx`       | `Cliente1234!`|
 
 API key demo:
 
@@ -103,17 +104,19 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 - **Libreta** (`/portal/libreta`): direcciones (origen/destino) y paquetes guardados por cliente. Se eligen o se guardan desde el formulario de cotización.
 - Formulario: origen/destino (C.P., ciudad, estado MX), medidas, peso y valor declarado. El botón **Cargar ejemplo CDMX → MTY** rellena un envío de prueba.
 - Resultados: compara paqueterías (precio MXN de menor a mayor), selecciona y compra la guía. Si el saldo no alcanza, se muestra el monto faltante y no se llama a Envía.
-- **Mis envíos**: historial con filtros (estado, paquetería, rastreo) y detalle con PDF + rastreo.
+- **Mis envíos**: historial con búsqueda y filtros (estado, paquetería, rango de fechas, rastreo) y detalle con PDF + rastreo.
+- **Libreta** y **Saldo**: listados con búsqueda y filtros (uso/tipo, fechas en movimientos).
 
 ### Admin (operador)
 
 Separado del portal de cliente (`/portal`). Navegación:
 
-- **Panel** (`/admin`): ventas, margen, ingreso y envíos recientes. Muestra ceros hasta que exista al menos una guía comprada (usa modo simulado si no hay token).
-- **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger, API keys, libreta de direcciones/paquetes en solo lectura) y **Cargar saldo**.
-- **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key para Payment Brick, Checkout Pro con el access token, sin secretos) y API keys por cliente. iVoy sigue como próximo.
-- **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Se puede marcar un mes como *facturado* (sin CFDI).
-- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente.
+- **Dashboard** (`/admin`): pantalla de inicio del admin (el login redirige aquí). KPIs del periodo (hoy / 7 días / este mes / todo), comparación vs periodo anterior, desglose por cliente y paquetería, y actividad reciente.
+- **Reportes** (`/admin/reportes`): ventas, envíos, recargas de saldo y margen/comisión por cliente, paquetería y día. Filtros + export CSV.
+- **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger filtrable, API keys, libreta de direcciones/paquetes en solo lectura) y **Cargar saldo**.
+- **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key para Payment Brick, Checkout Pro con el access token, sin secretos) y API keys por cliente (búsqueda + filtro). iVoy sigue como próximo.
+- **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Búsqueda + filtros. Se puede marcar un mes como *facturado* (sin CFDI).
+- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente, con búsqueda, estado, paquetería y rango de fechas.
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
 
 Fuera de alcance todavía: timbrado CFDI de la recarga.

@@ -44,7 +44,7 @@ export function AppHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-2.5 py-1.5 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+                    "rounded-md px-2 py-1.5 text-[0.8125rem] font-medium tracking-[-0.011em] text-white/70 transition-colors hover:bg-white/10 hover:text-white",
                     active && "bg-white/10 text-white",
                   )}
                 >
@@ -88,7 +88,7 @@ export function AppHeader({
         </div>
       </div>
       {open ? (
-        <nav className="border-t border-white/15 bg-navy px-4 py-3 md:hidden">
+        <nav className="border-t border-white/15 bg-navy px-4 py-3 lg:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
             {items.map((item) => {
               const active = isActive(pathname, item.href);

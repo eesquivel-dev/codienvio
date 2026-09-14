@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Field } from "@/components/field";
+import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { matchesDateRange, matchesQuery } from "@/lib/catalog-query";
 import { carrierLabel, formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
 
@@ -26,19 +28,26 @@ export type AdminShipmentRow = {
 export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow[] }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [carrier, setCarrier] = useState("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const carriers = useMemo(
+    () => [...new Set(shipments.map((item) => item.carrier))].sort(),
+    [shipments],
+  );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return shipments.filter((item) => {
       if (status !== "all" && item.status !== status) return false;
-      if (!q) return true;
-      return [item.clientName, item.clientEmail, item.trackingNumber, item.carrier]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
+      if (carrier !== "all" && item.carrier !== carrier) return false;
+      if (!matchesDateRange(item.createdAt, from, to)) return false;
+      return matchesQuery(
+        [item.clientName, item.clientEmail, item.trackingNumber, item.carrier, item.serviceName, item.id],
+        query,
+      );
     });
-  }, [shipments, query, status]);
+  }, [shipments, query, status, carrier, from, to]);
 
   const totals = filtered.reduce(
     (acc, item) => {
@@ -51,20 +60,45 @@ export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow
     { cost: 0, fee: 0, price: 0 },
   );
 
+  const hasActiveFilters = Boolean(query.trim() || status !== "all" || carrier !== "all" || from || to);
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Input
-          placeholder="Buscar cliente, correo o rastreo"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="all">Todos los estados</option>
-          <option value="PURCHASED">Compradas</option>
-          <option value="FAILED">Fallidas</option>
-        </NativeSelect>
-      </div>
+      <ListFilters
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Buscar cliente, correo, rastreo o paquetería"
+        resultCount={filtered.length}
+        totalCount={shipments.length}
+        noun="envíos"
+        hasActiveFilters={hasActiveFilters}
+        onClear={() => {
+          setQuery("");
+          setStatus("all");
+          setCarrier("all");
+          setFrom("");
+          setTo("");
+        }}
+      >
+        <Field label="Estado" htmlFor="admin-ship-status">
+          <NativeSelect id="admin-ship-status" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="all">Todos los estados</option>
+            <option value="PURCHASED">Compradas</option>
+            <option value="FAILED">Fallidas</option>
+          </NativeSelect>
+        </Field>
+        <Field label="Paquetería" htmlFor="admin-ship-carrier">
+          <NativeSelect id="admin-ship-carrier" value={carrier} onChange={(event) => setCarrier(event.target.value)}>
+            <option value="all">Todas las paqueterías</option>
+            {carriers.map((code) => (
+              <option key={code} value={code}>
+                {carrierLabel(code)}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <DateRangeFields from={from} to={to} onFromChange={setFrom} onToChange={setTo} />
+      </ListFilters>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <MiniStat label="Costo Envia" value={formatMxn(totals.cost)} />

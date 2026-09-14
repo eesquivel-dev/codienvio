@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Field } from "@/components/field";
+import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { matchesDateRange, matchesQuery } from "@/lib/catalog-query";
 import { carrierLabel, formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
 
@@ -24,6 +26,8 @@ export function ShipmentHistory({ shipments }: { shipments: HistoryShipment[] })
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [carrier, setCarrier] = useState("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const carriers = useMemo(
     () => [...new Set(shipments.map((item) => item.carrier))].sort(),
@@ -31,41 +35,53 @@ export function ShipmentHistory({ shipments }: { shipments: HistoryShipment[] })
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return shipments.filter((item) => {
       if (status !== "all" && item.status !== status) return false;
       if (carrier !== "all" && item.carrier !== carrier) return false;
-      if (!q) return true;
-      const haystack = [item.trackingNumber, item.carrier, item.serviceName, item.id]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
+      if (!matchesDateRange(item.createdAt, from, to)) return false;
+      return matchesQuery([item.trackingNumber, item.carrier, item.serviceName, item.id], query);
     });
-  }, [shipments, query, status, carrier]);
+  }, [shipments, query, status, carrier, from, to]);
+
+  const hasActiveFilters = Boolean(query.trim() || status !== "all" || carrier !== "all" || from || to);
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Input
-          placeholder="Buscar rastreo, paquetería o ID"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <NativeSelect value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="all">Todos los estados</option>
-          <option value="PURCHASED">Compradas</option>
-          <option value="FAILED">Fallidas</option>
-        </NativeSelect>
-        <NativeSelect value={carrier} onChange={(e) => setCarrier(e.target.value)}>
-          <option value="all">Todas las paqueterías</option>
-          {carriers.map((code) => (
-            <option key={code} value={code}>
-              {carrierLabel(code)}
-            </option>
-          ))}
-        </NativeSelect>
-      </div>
+      <ListFilters
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Buscar rastreo, paquetería o ID"
+        resultCount={filtered.length}
+        totalCount={shipments.length}
+        noun="envíos"
+        hasActiveFilters={hasActiveFilters}
+        onClear={() => {
+          setQuery("");
+          setStatus("all");
+          setCarrier("all");
+          setFrom("");
+          setTo("");
+        }}
+      >
+        <Field label="Estado" htmlFor="portal-ship-status">
+          <NativeSelect id="portal-ship-status" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="all">Todos los estados</option>
+            <option value="PURCHASED">Compradas</option>
+            <option value="FAILED">Fallidas</option>
+          </NativeSelect>
+        </Field>
+        <Field label="Paquetería" htmlFor="portal-ship-carrier">
+          <NativeSelect id="portal-ship-carrier" value={carrier} onChange={(event) => setCarrier(event.target.value)}>
+            <option value="all">Todas las paqueterías</option>
+            {carriers.map((code) => (
+              <option key={code} value={code}>
+                {carrierLabel(code)}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <DateRangeFields from={from} to={to} onFromChange={setFrom} onToChange={setTo} />
+      </ListFilters>
 
       <Card className="hidden md:block">
         <CardContent className="p-0">

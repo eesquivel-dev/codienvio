@@ -329,7 +329,7 @@ export async function listShipments(clientId: string) {
   const rows = await prisma.shipment.findMany({
     where: { clientId },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: 200,
   });
   return rows.map(toPublicShipment);
 }
@@ -359,44 +359,10 @@ export async function getShipmentTracking(clientId: string, shipmentId: string) 
   );
 }
 
-export async function getAdminDashboardStats() {
-  const [saleAgg, purchasedCount, failedCount, activeClients, recent] = await Promise.all([
-    prisma.sale.aggregate({
-      _count: { _all: true },
-      _sum: { feeAmount: true, clientPrice: true, providerCost: true },
-    }),
-    prisma.shipment.count({ where: { status: "PURCHASED" } }),
-    prisma.shipment.count({ where: { status: "FAILED" } }),
-    prisma.client.count({ where: { active: true } }),
-    prisma.shipment.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { client: { include: { user: true } } },
-    }),
-  ]);
-
-  return {
-    salesCount: saleAgg._count._all,
-    marginTotal: asMoney(Number(saleAgg._sum.feeAmount ?? 0)),
-    revenueTotal: asMoney(Number(saleAgg._sum.clientPrice ?? 0)),
-    costTotal: asMoney(Number(saleAgg._sum.providerCost ?? 0)),
-    purchasedCount,
-    failedCount,
-    activeClients,
-    recent: recent.map((shipment) => ({
-      ...toPublicShipment(shipment),
-      providerCost: asMoney(shipment.providerCost),
-      feeAmount: asMoney(shipment.feeAmount),
-      clientName: shipment.client.companyName,
-      clientEmail: shipment.client.user.email,
-    })),
-  };
-}
-
 export async function listAllShipments() {
   const rows = await prisma.shipment.findMany({
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: 400,
     include: { client: { include: { user: true } } },
   });
   return rows.map((shipment) => ({
