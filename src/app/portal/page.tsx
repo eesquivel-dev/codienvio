@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, History, Package, Wallet } from "lucide-react";
 import { QuoteForm } from "@/components/quote-form";
+import { TrackingBar } from "@/components/tracking-bar";
 import { Button } from "@/components/ui/button";
+import { clientCopy } from "@/lib/brand-copy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireClient } from "@/lib/auth";
 import { formatDateTimeMx } from "@/lib/format";
@@ -45,6 +47,11 @@ export default async function PortalPage() {
           <Button asChild variant="outline" size="lg">
             <Link href="/portal/envios">Ver historial</Link>
           </Button>
+        </div>
+        <div className="mt-8 max-w-xl space-y-2">
+          <p className="type-overline text-navy">{clientCopy.trackTitle}</p>
+          <p className="text-sm text-muted-foreground">{clientCopy.trackLead}</p>
+          <TrackingBar />
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <Card className="border-dashed shadow-none">

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createSavedPackageAction,
   deleteSavedPackageAction,
   updateSavedPackageAction,
 } from "@/app/portal/actions";
 import { Field } from "@/components/field";
+import { ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
+import { matchesQuery } from "@/lib/catalog-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +38,15 @@ export function PackagePresets({ initialPackages }: { initialPackages: SavedPack
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | SavedPackageDTO["type"]>("all");
+
+  const filtered = useMemo(() => {
+    return packages.filter((item) => {
+      if (typeFilter !== "all" && item.type !== typeFilter) return false;
+      return matchesQuery([item.nickname, item.content, item.type, String(item.weightKg)], query);
+    });
+  }, [packages, query, typeFilter]);
 
   function startCreate() {
     setEditingId(null);
@@ -232,11 +243,40 @@ export function PackagePresets({ initialPackages }: { initialPackages: SavedPack
           </form>
         ) : null}
 
+        <ListFilters
+          query={query}
+          onQueryChange={setQuery}
+          placeholder="Buscar alias o contenido"
+          resultCount={filtered.length}
+          totalCount={packages.length}
+          noun="paquetes"
+          hasActiveFilters={Boolean(query.trim() || typeFilter !== "all")}
+          onClear={() => {
+            setQuery("");
+            setTypeFilter("all");
+          }}
+        >
+          <Field label="Tipo" htmlFor="pkg-filter-type">
+            <NativeSelect
+              id="pkg-filter-type"
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)}
+            >
+              <option value="all">Todos</option>
+              <option value="box">Caja</option>
+              <option value="envelope">Sobre</option>
+              <option value="pallet">Tarima</option>
+            </NativeSelect>
+          </Field>
+        </ListFilters>
+
         {packages.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay paquetes. Guarda medidas frecuentes para cotizar más rápido.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ningún paquete coincide con los filtros.</p>
         ) : (
           <ul className="space-y-3">
-            {packages.map((item) => (
+            {filtered.map((item) => (
               <li
                 key={item.id}
                 className="flex flex-col gap-3 rounded-lg border border-navy/10 p-3 sm:flex-row sm:items-start sm:justify-between"

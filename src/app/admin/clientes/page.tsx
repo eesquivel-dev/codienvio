@@ -14,7 +14,7 @@ export default async function ClientsPage() {
       include: {
         user: true,
         apiKeys: { orderBy: { createdAt: "desc" } },
-        walletTxns: { orderBy: { createdAt: "desc" }, take: 8 },
+        walletTxns: { orderBy: { createdAt: "desc" }, take: 40 },
         savedAddresses: { orderBy: { updatedAt: "desc" } },
         savedPackages: { orderBy: { updatedAt: "desc" } },
       },

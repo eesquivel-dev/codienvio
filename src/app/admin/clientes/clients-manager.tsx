@@ -11,7 +11,9 @@ import {
 import { WalletPanel } from "@/app/admin/clientes/wallet-panel";
 import { CatalogDrawer } from "@/components/catalog-drawer";
 import { Field } from "@/components/field";
+import { ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
+import { matchesQuery } from "@/lib/catalog-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,13 +76,11 @@ export function ClientsManager({
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return clients.filter((client) => {
       if (status === "active" && !client.active) return false;
       if (status === "inactive" && client.active) return false;
       if (status === "zero" && client.balanceMxn !== 0) return false;
-      if (!q) return true;
-      return [client.companyName, client.email, client.name].join(" ").toLowerCase().includes(q);
+      return matchesQuery([client.companyName, client.email, client.name], query);
     });
   }, [clients, query, status]);
 
@@ -95,10 +95,7 @@ export function ClientsManager({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {filtered.length} de {clients.length} clientes
-        </p>
-        <Button type="button" onClick={() => setShowCreate((value) => !value)}>
+        <Button type="button" className="sm:ml-auto" onClick={() => setShowCreate((value) => !value)}>
           {showCreate ? "Cerrar alta" : "Nuevo cliente"}
         </Button>
       </div>
@@ -169,22 +166,32 @@ export function ClientsManager({
         </div>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Input
-          placeholder="Buscar por empresa, nombre o correo"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <NativeSelect
-          value={status}
-          onChange={(e) => setStatus(e.target.value as typeof status)}
-        >
-          <option value="all">Todos</option>
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-          <option value="zero">Saldo en $0</option>
-        </NativeSelect>
-      </div>
+      <ListFilters
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Buscar por empresa, nombre o correo"
+        resultCount={filtered.length}
+        totalCount={clients.length}
+        noun="clientes"
+        hasActiveFilters={Boolean(query.trim() || status !== "all")}
+        onClear={() => {
+          setQuery("");
+          setStatus("all");
+        }}
+      >
+        <Field label="Estado" htmlFor="client-status">
+          <NativeSelect
+            id="client-status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as typeof status)}
+          >
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+            <option value="zero">Saldo en $0</option>
+          </NativeSelect>
+        </Field>
+      </ListFilters>
 
       <Card className="hidden md:block">
         <CardContent className="p-0">
@@ -289,6 +296,108 @@ export function ClientsManager({
           onPlainKey={setPlainKey}
         />
       ) : null}
+    </div>
+  );
+}
+
+function AdminClientAddressBook({
+  addresses,
+  packages,
+}: {
+  addresses: SavedAddressDTO[];
+  packages: SavedPackageDTO[];
+}) {
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<"all" | "addresses" | "packages">("all");
+
+  const filteredAddresses = addresses.filter((address) =>
+    matchesQuery(
+      [address.label, address.name, address.company, address.city, address.postalCode, address.phone],
+      query,
+    ),
+  );
+  const filteredPackages = packages.filter((item) =>
+    matchesQuery([item.nickname, item.content, item.type], query),
+  );
+  const showAddresses = kind !== "packages";
+  const showPackages = kind !== "addresses";
+
+  return (
+    <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+      <p className="type-overline text-muted-foreground">Libreta del cliente</p>
+      <p className="text-xs text-muted-foreground">
+        Solo lectura. El cliente administra direcciones y paquetes en el portal.
+      </p>
+      {addresses.length === 0 && packages.length === 0 ? (
+        <p className="text-muted-foreground">Sin direcciones ni paquetes guardados.</p>
+      ) : (
+        <div className="space-y-3">
+          <ListFilters
+            query={query}
+            onQueryChange={setQuery}
+            placeholder="Buscar alias, ciudad, C.P. o contenido"
+            resultCount={(showAddresses ? filteredAddresses.length : 0) + (showPackages ? filteredPackages.length : 0)}
+            totalCount={addresses.length + packages.length}
+            noun="registros"
+            hasActiveFilters={Boolean(query.trim() || kind !== "all")}
+            onClear={() => {
+              setQuery("");
+              setKind("all");
+            }}
+          >
+            <Field label="Tipo" htmlFor="admin-libreta-kind">
+              <NativeSelect
+                id="admin-libreta-kind"
+                value={kind}
+                onChange={(event) => setKind(event.target.value as typeof kind)}
+              >
+                <option value="all">Direcciones y paquetes</option>
+                <option value="addresses">Solo direcciones</option>
+                <option value="packages">Solo paquetes</option>
+              </NativeSelect>
+            </Field>
+          </ListFilters>
+          {showAddresses && filteredAddresses.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-navy">Direcciones ({filteredAddresses.length})</p>
+              <ul className="space-y-2">
+                {filteredAddresses.map((address) => (
+                  <li key={address.id} className="rounded-md border border-navy/10 bg-white p-2">
+                    <p className="font-medium">
+                      {address.label}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        · {savedAddressTypeLabel(address.type)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatSavedAddressLine(address)}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {showPackages && filteredPackages.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-navy">Paquetes ({filteredPackages.length})</p>
+              <ul className="space-y-2">
+                {filteredPackages.map((item) => (
+                  <li key={item.id} className="rounded-md border border-navy/10 bg-white p-2">
+                    <p className="font-medium">
+                      {item.nickname}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        · {packageTypeLabel(item.type)}
+                      </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatSavedPackageLine(item)}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {(showAddresses ? filteredAddresses.length : 0) + (showPackages ? filteredPackages.length : 0) === 0 ? (
+            <p className="text-muted-foreground">Ningún registro coincide con los filtros.</p>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
@@ -437,54 +546,10 @@ function ClientDrawer({
           </Button>
         </div>
 
-        <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-          <p className="type-overline text-muted-foreground">Libreta del cliente</p>
-          <p className="text-xs text-muted-foreground">
-            Solo lectura. El cliente administra direcciones y paquetes en el portal.
-          </p>
-          {client.savedAddresses.length === 0 && client.savedPackages.length === 0 ? (
-            <p className="text-muted-foreground">Sin direcciones ni paquetes guardados.</p>
-          ) : (
-            <div className="space-y-3">
-              {client.savedAddresses.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-navy">Direcciones ({client.savedAddresses.length})</p>
-                  <ul className="space-y-2">
-                    {client.savedAddresses.map((address) => (
-                      <li key={address.id} className="rounded-md border border-navy/10 bg-white p-2">
-                        <p className="font-medium">
-                          {address.label}{" "}
-                          <span className="text-xs font-normal text-muted-foreground">
-                            · {savedAddressTypeLabel(address.type)}
-                          </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatSavedAddressLine(address)}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {client.savedPackages.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-navy">Paquetes ({client.savedPackages.length})</p>
-                  <ul className="space-y-2">
-                    {client.savedPackages.map((item) => (
-                      <li key={item.id} className="rounded-md border border-navy/10 bg-white p-2">
-                        <p className="font-medium">
-                          {item.nickname}{" "}
-                          <span className="text-xs font-normal text-muted-foreground">
-                            · {packageTypeLabel(item.type)}
-                          </span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatSavedPackageLine(item)}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
+        <AdminClientAddressBook
+          addresses={client.savedAddresses}
+          packages={client.savedPackages}
+        />
       </div>
     </CatalogDrawer>
   );

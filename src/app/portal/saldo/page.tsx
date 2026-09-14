@@ -5,10 +5,10 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireClient } from "@/lib/auth";
-import { formatDateTimeMx } from "@/lib/format";
+import { WalletLedgerList } from "@/components/wallet-ledger-list";
 import { getMercadoPagoPublicKey, getMercadoPagoStatus } from "@/lib/mercadopago";
 import { formatMxn } from "@/lib/money";
-import { getClientWallet, walletTxnTypeLabel } from "@/lib/wallet";
+import { getClientWallet } from "@/lib/wallet";
 import { applyMercadoPagoPayment } from "@/lib/wallet-topup";
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -81,7 +81,7 @@ export default async function PortalSaldoPage({
       !["approved", "rejected", "cancelled", "refunded"].includes(paymentStatus),
   );
 
-  const wallet = await getClientWallet(session.user.clientId!, 20);
+  const wallet = await getClientWallet(session.user.clientId!, 80);
 
   return (
     <div className="space-y-6">
@@ -162,36 +162,11 @@ export default async function PortalSaldoPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Movimientos recientes</CardTitle>
+          <CardTitle>Movimientos</CardTitle>
+          <CardDescription>Busca y filtra cargas, compras de guía y ajustes.</CardDescription>
         </CardHeader>
         <CardContent>
-          {wallet.ledger.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aún no hay movimientos.</p>
-          ) : (
-            <ul className="space-y-2">
-              {wallet.ledger.map((row) => (
-                <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                  <span>
-                    {walletTxnTypeLabel(row.type)}
-                    {row.note ? ` · ${row.note}` : ""}
-                    <span className="block text-xs text-muted-foreground">
-                      {formatDateTimeMx(row.createdAt)}
-                    </span>
-                  </span>
-                  <span
-                    className={
-                      row.amountMxn >= 0
-                        ? "font-semibold tabular-nums text-navy"
-                        : "font-semibold tabular-nums text-destructive"
-                    }
-                  >
-                    {row.amountMxn >= 0 ? "+" : ""}
-                    {formatMxn(row.amountMxn)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <WalletLedgerList rows={wallet.ledger} />
         </CardContent>
       </Card>
     </div>

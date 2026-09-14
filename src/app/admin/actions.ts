@@ -7,7 +7,6 @@ import { AppError, errorToResponse } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { getActiveProvider, getSettingsRow, resolveEnviaToken, saveSettings } from "@/lib/settings";
-import { getAdminDashboardStats } from "@/lib/services/shipping";
 import { adjustClientWallet } from "@/lib/wallet";
 import {
   adjustBalanceSchema,
@@ -34,6 +33,7 @@ export async function updateSettingsAction(formData: FormData) {
     });
     await saveSettings(parsed);
     revalidatePath("/admin");
+    revalidatePath("/admin/reportes");
     return { ok: true as const };
   } catch (error) {
     return actionError(error);
@@ -51,11 +51,6 @@ export async function testEnviaAction() {
   } catch (error) {
     return actionError(error);
   }
-}
-
-export async function getAdminDashboardView() {
-  await requireAdmin();
-  return getAdminDashboardStats();
 }
 
 export async function getAdminSettingsView() {
@@ -110,6 +105,8 @@ export async function createClientAction(formData: FormData) {
     revalidatePath("/admin/clientes");
     revalidatePath("/admin/integraciones");
     revalidatePath("/admin/facturacion");
+    revalidatePath("/admin/reportes");
+    revalidatePath("/admin");
     return { ok: true as const, clientId: user.client?.id };
   } catch (error) {
     return actionError(error);
@@ -188,6 +185,8 @@ export async function adjustClientBalanceAction(formData: FormData) {
 
     revalidatePath("/admin/clientes");
     revalidatePath("/admin/facturacion");
+    revalidatePath("/admin/reportes");
+    revalidatePath("/admin");
     revalidatePath("/portal");
     return { ok: true as const, balanceMxn: result.balanceMxn };
   } catch (error) {

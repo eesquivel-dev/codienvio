@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { adjustClientBalanceAction } from "@/app/admin/actions";
 import { Field } from "@/components/field";
+import { WalletLedgerList } from "@/components/wallet-ledger-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatDateTimeMx } from "@/lib/format";
-import { formatMxn } from "@/lib/money";
-import { walletTxnTypeLabel, type WalletLedgerRow } from "@/lib/wallet-copy";
+import type { WalletLedgerRow } from "@/lib/wallet-copy";
 
 export type WalletPanelClient = {
   id: string;
@@ -96,34 +95,8 @@ export function WalletPanel({
         </div>
       </form>
       <div>
-        <p className="type-overline mb-2 text-muted-foreground">Movimientos recientes</p>
-        {client.ledger.length === 0 ? (
-          <p className="text-muted-foreground">Aún no hay movimientos.</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {client.ledger.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-2">
-                <span>
-                  {walletTxnTypeLabel(row.type)}
-                  {row.note ? ` · ${row.note}` : ""}
-                  <span className="block text-xs text-muted-foreground">
-                    {formatDateTimeMx(row.createdAt)}
-                  </span>
-                </span>
-                <span
-                  className={
-                    row.amountMxn >= 0
-                      ? "font-semibold tabular-nums text-navy"
-                      : "font-semibold tabular-nums text-destructive"
-                  }
-                >
-                  {row.amountMxn >= 0 ? "+" : ""}
-                  {formatMxn(row.amountMxn)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="type-overline mb-2 text-muted-foreground">Movimientos</p>
+        <WalletLedgerList rows={client.ledger} />
       </div>
     </div>
   );

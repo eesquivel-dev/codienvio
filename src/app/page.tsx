@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Gauge, Package, Search, ShieldCheck, Wallet, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { BrandMark } from "@/components/brand-mark";
+import { TrackingBar } from "@/components/tracking-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { clientCopy, landingBenefits } from "@/lib/brand-copy";
@@ -38,6 +39,11 @@ export default async function HomePage() {
               <Button asChild variant="inverse" size="lg">
                 <Link href="/docs">{clientCopy.landingDocs}</Link>
               </Button>
+            </div>
+            <div className="max-w-xl space-y-2 pt-4">
+              <p className="type-overline text-lima">{clientCopy.trackTitle}</p>
+              <p className="text-sm text-white/75">{clientCopy.trackLead}</p>
+              <TrackingBar variant="on-dark" />
             </div>
           </div>
           <dl className="grid gap-3 sm:grid-cols-3">

@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createApiKeyAction, revokeApiKeyAction } from "@/app/admin/actions";
 import { Field } from "@/components/field";
+import { ListFilters } from "@/components/list-filters";
+import { NativeSelect } from "@/components/native-select";
 import { Badge } from "@/components/ui/badge";
+import { matchesQuery } from "@/lib/catalog-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -174,18 +177,24 @@ function StatusLine({ label, value, ok }: { label: string; value: string; ok: bo
 
 function ApiKeysCatalog({ clients }: { clients: ClientKeys[] }) {
   const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<"all" | "active" | "inactive" | "keys" | "revoked">("all");
   const [error, setError] = useState<string | null>(null);
   const [plainKey, setPlainKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [keyName, setKeyName] = useState("API");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return clients;
-    return clients.filter((client) =>
-      [client.companyName, client.email].join(" ").toLowerCase().includes(q),
-    );
-  }, [clients, query]);
+    return clients.filter((client) => {
+      if (status === "active" && !client.active) return false;
+      if (status === "inactive" && client.active) return false;
+      if (status === "keys" && client.keys.filter((key) => !key.revoked).length === 0) return false;
+      if (status === "revoked" && !client.keys.some((key) => key.revoked)) return false;
+      return matchesQuery(
+        [client.companyName, client.email, ...client.keys.map((key) => key.prefix), ...client.keys.map((key) => key.name)],
+        query,
+      );
+    });
+  }, [clients, query, status]);
 
   return (
     <Card>
@@ -197,12 +206,32 @@ function ApiKeysCatalog({ clients }: { clients: ClientKeys[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-[1fr_12rem]">
-          <Input
-            placeholder="Buscar cliente"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <ListFilters
+          query={query}
+          onQueryChange={setQuery}
+          placeholder="Buscar cliente, correo o prefijo"
+          resultCount={filtered.length}
+          totalCount={clients.length}
+          noun="clientes"
+          hasActiveFilters={Boolean(query.trim() || status !== "all")}
+          onClear={() => {
+            setQuery("");
+            setStatus("all");
+          }}
+        >
+          <Field label="Estado" htmlFor="keys-status">
+            <NativeSelect
+              id="keys-status"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+            >
+              <option value="all">Todos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+              <option value="keys">Con keys activas</option>
+              <option value="revoked">Con keys revocadas</option>
+            </NativeSelect>
+          </Field>
           <Field label="Nombre de la key" htmlFor="new-key-name">
             <Input
               id="new-key-name"
@@ -211,7 +240,7 @@ function ApiKeysCatalog({ clients }: { clients: ClientKeys[] }) {
               placeholder="API"
             />
           </Field>
-        </div>
+        </ListFilters>
 
         {error ? (
           <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">

@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { markBillingPeriodAction } from "@/app/admin/actions";
 import { Field } from "@/components/field";
+import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
+import { matchesQuery } from "@/lib/catalog-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +50,7 @@ export function BillingConsole({
   defaultFrom: string;
   defaultTo: string;
 }) {
+  const [query, setQuery] = useState("");
   const [clientId, setClientId] = useState("");
   const [statementClientId, setStatementClientId] = useState(clients[0]?.id ?? "");
   const [from, setFrom] = useState(defaultFrom);
@@ -60,10 +63,14 @@ export function BillingConsole({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const filtered = useMemo(
-    () => filterBillingEvents(events, { clientId, from, to, kind }),
-    [events, clientId, from, to, kind],
-  );
+  const filtered = useMemo(() => {
+    return filterBillingEvents(events, { clientId, from, to, kind }).filter((event) =>
+      matchesQuery(
+        [event.clientName, event.trackingNumber, event.note, billingEventKindLabel(event.kind)],
+        query,
+      ),
+    );
+  }, [events, clientId, from, to, kind, query]);
   const totals = useMemo(() => sumBillingTotals(filtered), [filtered]);
 
   const period = billingPeriodKey(Number(year), Number(month));
@@ -115,7 +122,24 @@ export function BillingConsole({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+      <ListFilters
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Buscar cliente, rastreo o nota"
+        resultCount={filtered.length}
+        totalCount={events.length}
+        noun="movimientos"
+        hasActiveFilters={Boolean(
+          query.trim() || clientId || kind !== "ALL" || from !== defaultFrom || to !== defaultTo,
+        )}
+        onClear={() => {
+          setQuery("");
+          setClientId("");
+          setKind("ALL");
+          setFrom(defaultFrom);
+          setTo(defaultTo);
+        }}
+      >
         <Field label="Cliente" htmlFor="billing-client">
           <NativeSelect
             id="billing-client"
@@ -134,17 +158,6 @@ export function BillingConsole({
             ))}
           </NativeSelect>
         </Field>
-        <Field label="Desde" htmlFor="billing-from">
-          <Input
-            id="billing-from"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </Field>
-        <Field label="Hasta" htmlFor="billing-to">
-          <Input id="billing-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
         <Field label="Tipo" htmlFor="billing-kind">
           <NativeSelect
             id="billing-kind"
@@ -157,7 +170,15 @@ export function BillingConsole({
             <option value="ADJUSTMENT">Ajustes</option>
           </NativeSelect>
         </Field>
-      </div>
+        <DateRangeFields
+          from={from}
+          to={to}
+          onFromChange={setFrom}
+          onToChange={setTo}
+          fromId="billing-from"
+          toId="billing-to"
+        />
+      </ListFilters>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MiniStat label="Precio cliente" value={formatMxn(totals.clientPrice)} hint={`${totals.salesCount} ventas`} />

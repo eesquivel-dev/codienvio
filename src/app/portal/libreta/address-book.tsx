@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createSavedAddressAction,
   deleteSavedAddressAction,
   updateSavedAddressAction,
 } from "@/app/portal/actions";
 import { Field } from "@/components/field";
+import { ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
+import { matchesQuery } from "@/lib/catalog-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +44,28 @@ export function AddressBook({ initialAddresses }: { initialAddresses: SavedAddre
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | SavedAddressDTO["type"]>("all");
+
+  const filtered = useMemo(() => {
+    return addresses.filter((address) => {
+      if (typeFilter !== "all" && address.type !== typeFilter) return false;
+      return matchesQuery(
+        [
+          address.label,
+          address.name,
+          address.company,
+          address.city,
+          address.state,
+          address.postalCode,
+          address.phone,
+          address.email,
+          address.street,
+        ],
+        query,
+      );
+    });
+  }, [addresses, query, typeFilter]);
 
   function startCreate() {
     setEditingId(null);
@@ -263,11 +287,40 @@ export function AddressBook({ initialAddresses }: { initialAddresses: SavedAddre
           </form>
         ) : null}
 
+        <ListFilters
+          query={query}
+          onQueryChange={setQuery}
+          placeholder="Buscar alias, nombre, ciudad o C.P."
+          resultCount={filtered.length}
+          totalCount={addresses.length}
+          noun="direcciones"
+          hasActiveFilters={Boolean(query.trim() || typeFilter !== "all")}
+          onClear={() => {
+            setQuery("");
+            setTypeFilter("all");
+          }}
+        >
+          <Field label="Uso" htmlFor="addr-filter-type">
+            <NativeSelect
+              id="addr-filter-type"
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)}
+            >
+              <option value="all">Todos</option>
+              <option value="BOTH">Origen y destino</option>
+              <option value="ORIGIN">Solo origen</option>
+              <option value="DESTINATION">Solo destino</option>
+            </NativeSelect>
+          </Field>
+        </ListFilters>
+
         {addresses.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay direcciones. Agrega la primera para reutilizarla al cotizar.</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ninguna dirección coincide con los filtros.</p>
         ) : (
           <ul className="space-y-3">
-            {addresses.map((address) => (
+            {filtered.map((address) => (
               <li
                 key={address.id}
                 className="flex flex-col gap-3 rounded-lg border border-navy/10 p-3 sm:flex-row sm:items-start sm:justify-between"
