@@ -6,8 +6,13 @@ import { ClientsManager } from "@/app/admin/clientes/clients-manager";
 import { PageHeader } from "@/components/page-header";
 import { toSavedAddressDTO, toSavedPackageDTO } from "@/lib/saved-presets";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   await requireAdmin();
+  const params = await searchParams;
   const [clients, fees] = await Promise.all([
     prisma.client.findMany({
       orderBy: { companyName: "asc" },
@@ -27,10 +32,12 @@ export default async function ClientsPage() {
       <PageHeader
         title="Clientes"
         description="Catálogo de cuentas: empresa, comisión, saldo prepagado y API keys. La key completa solo se muestra una vez."
+        backHref="/admin"
       />
       <ClientsManager
         defaultFeePercent={fees.percent}
         defaultFeeFixedMxn={fees.fixedMxn}
+        initialStatus={params.status}
         clients={clients.map((client) => ({
           id: client.id,
           companyName: client.companyName,

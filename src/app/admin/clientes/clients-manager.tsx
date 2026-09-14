@@ -14,6 +14,7 @@ import { Field } from "@/components/field";
 import { ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
 import { matchesQuery } from "@/lib/catalog-query";
+import { isLowBalance } from "@/lib/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,15 +61,24 @@ export function ClientsManager({
   clients,
   defaultFeePercent,
   defaultFeeFixedMxn,
+  initialStatus,
 }: {
   clients: AdminClientRow[];
   defaultFeePercent: number;
   defaultFeeFixedMxn: number;
+  initialStatus?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [plainKey, setPlainKey] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"all" | "active" | "inactive" | "zero">("all");
+  const [status, setStatus] = useState<"all" | "active" | "inactive" | "zero" | "low">(
+    initialStatus === "active" ||
+      initialStatus === "inactive" ||
+      initialStatus === "zero" ||
+      initialStatus === "low"
+      ? initialStatus
+      : "all",
+  );
   const [copied, setCopied] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -80,6 +90,7 @@ export function ClientsManager({
       if (status === "active" && !client.active) return false;
       if (status === "inactive" && client.active) return false;
       if (status === "zero" && client.balanceMxn !== 0) return false;
+      if (status === "low" && (!client.active || !isLowBalance(client.balanceMxn))) return false;
       return matchesQuery([client.companyName, client.email, client.name], query);
     });
   }, [clients, query, status]);
@@ -189,6 +200,7 @@ export function ClientsManager({
             <option value="active">Activos</option>
             <option value="inactive">Inactivos</option>
             <option value="zero">Saldo en $0</option>
+            <option value="low">Saldo bajo</option>
           </NativeSelect>
         </Field>
       </ListFilters>

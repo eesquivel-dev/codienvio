@@ -21,14 +21,20 @@ export function trackingStatusLabel(status: string): string {
   const map: Record<string, string> = {
     Created: "Creada",
     created: "Creada",
+    Pending: "Creada",
+    Pickup: "En tránsito",
     "In Transit": "En tránsito",
     in_transit: "En tránsito",
+    "Out for Delivery": "En ruta",
+    out_for_delivery: "En ruta",
+    "En ruta": "En ruta",
     Delivered: "Entregada",
     delivered: "Entregada",
     Exception: "Incidencia",
+    Returned: "Devuelta",
     Desconocido: "Desconocido",
   };
-  return map[status] ?? status;
+  return map[status] ?? map[status.replace(/[_-]+/g, " ")] ?? status;
 }
 
 export function formatDateTimeMx(value: string | Date): string {

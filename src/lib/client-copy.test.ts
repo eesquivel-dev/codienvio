@@ -5,6 +5,7 @@ import { CLIENT_COPY_FORBIDDEN } from "./brand-copy";
 const CLIENT_FACING_FILES = [
   "src/app/page.tsx",
   "src/app/rastreo/page.tsx",
+  "src/components/tracking-stepper.tsx",
   "src/components/tracking-bar.tsx",
   "src/app/login/page.tsx",
   "src/app/docs/page.tsx",

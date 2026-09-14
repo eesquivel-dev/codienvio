@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ClientTypeahead } from "@/components/client-typeahead";
 import { Field } from "@/components/field";
 import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
@@ -20,17 +21,33 @@ export type AdminShipmentRow = {
   price: number;
   providerCost: number;
   feeAmount: number;
+  clientId: string;
   clientName: string;
   clientEmail: string;
   createdAt: string;
 };
 
-export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow[] }) {
+export function AdminShipmentsTable({
+  shipments,
+  initialStatus,
+  initialFrom,
+  initialTo,
+  initialClientId,
+  initialCarrier,
+}: {
+  shipments: AdminShipmentRow[];
+  initialStatus?: string;
+  initialFrom?: string;
+  initialTo?: string;
+  initialClientId?: string;
+  initialCarrier?: string;
+}) {
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
-  const [carrier, setCarrier] = useState("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [status, setStatus] = useState(initialStatus?.trim() || "all");
+  const [carrier, setCarrier] = useState(initialCarrier?.trim() || "all");
+  const [clientId, setClientId] = useState(initialClientId?.trim() ?? "");
+  const [from, setFrom] = useState(initialFrom?.trim() ?? "");
+  const [to, setTo] = useState(initialTo?.trim() ?? "");
 
   const carriers = useMemo(
     () => [...new Set(shipments.map((item) => item.carrier))].sort(),
@@ -40,14 +57,15 @@ export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow
   const filtered = useMemo(() => {
     return shipments.filter((item) => {
       if (status !== "all" && item.status !== status) return false;
-      if (carrier !== "all" && item.carrier !== carrier) return false;
+      if (carrier !== "all" && item.carrier.toLowerCase() !== carrier.toLowerCase()) return false;
+      if (clientId && item.clientId !== clientId) return false;
       if (!matchesDateRange(item.createdAt, from, to)) return false;
       return matchesQuery(
         [item.clientName, item.clientEmail, item.trackingNumber, item.carrier, item.serviceName, item.id],
         query,
       );
     });
-  }, [shipments, query, status, carrier, from, to]);
+  }, [shipments, query, status, carrier, clientId, from, to]);
 
   const totals = filtered.reduce(
     (acc, item) => {
@@ -60,7 +78,9 @@ export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow
     { cost: 0, fee: 0, price: 0 },
   );
 
-  const hasActiveFilters = Boolean(query.trim() || status !== "all" || carrier !== "all" || from || to);
+  const hasActiveFilters = Boolean(
+    query.trim() || status !== "all" || carrier !== "all" || clientId || from || to,
+  );
 
   return (
     <div className="space-y-4">
@@ -76,10 +96,27 @@ export function AdminShipmentsTable({ shipments }: { shipments: AdminShipmentRow
           setQuery("");
           setStatus("all");
           setCarrier("all");
+          setClientId("");
           setFrom("");
           setTo("");
         }}
       >
+        <ClientTypeahead
+          id="admin-ship-client"
+          value={clientId}
+          onChange={setClientId}
+          initialSelected={
+            initialClientId
+              ? shipments
+                  .filter((item) => item.clientId === initialClientId)
+                  .map((item) => ({
+                    id: item.clientId,
+                    companyName: item.clientName,
+                    email: item.clientEmail,
+                  }))[0]
+              : null
+          }
+        />
         <Field label="Estado" htmlFor="admin-ship-status">
           <NativeSelect id="admin-ship-status" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="all">Todos los estados</option>

@@ -72,6 +72,14 @@ export function mockPublicTracking(input: {
   }
 
   const createdEvent = { description: "Guía creada", date: created.toISOString() };
+  const transitEvent = {
+    description: "En tránsito hacia el destino",
+    date: new Date(created.getTime() + 26 * 3_600_000).toISOString(),
+  };
+  const outForDeliveryEvent = {
+    description: "En ruta de entrega",
+    date: new Date(created.getTime() + 50 * 3_600_000).toISOString(),
+  };
   if (hours < 24) {
     return toPublicTracking({
       trackingNumber: input.trackingNumber,
@@ -82,17 +90,24 @@ export function mockPublicTracking(input: {
       events: [createdEvent],
     });
   }
-  if (hours < 72) {
+  if (hours < 48) {
     return toPublicTracking({
       trackingNumber: input.trackingNumber,
       status: "In Transit",
       carrier: input.carrier,
       serviceName: input.serviceName,
       trackingUrl: input.trackingUrl,
-      events: [
-        { description: "En tránsito hacia el destino", date: new Date(created.getTime() + 26 * 3_600_000).toISOString() },
-        createdEvent,
-      ],
+      events: [transitEvent, createdEvent],
+    });
+  }
+  if (hours < 72) {
+    return toPublicTracking({
+      trackingNumber: input.trackingNumber,
+      status: "Out for Delivery",
+      carrier: input.carrier,
+      serviceName: input.serviceName,
+      trackingUrl: input.trackingUrl,
+      events: [outForDeliveryEvent, transitEvent, createdEvent],
     });
   }
   return toPublicTracking({
@@ -103,7 +118,8 @@ export function mockPublicTracking(input: {
     trackingUrl: input.trackingUrl,
     events: [
       { description: "Entregada", date: new Date(created.getTime() + 80 * 3_600_000).toISOString() },
-      { description: "En tránsito hacia el destino", date: new Date(created.getTime() + 26 * 3_600_000).toISOString() },
+      outForDeliveryEvent,
+      transitEvent,
       createdEvent,
     ],
   });

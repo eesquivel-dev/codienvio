@@ -602,10 +602,20 @@ export class EnviaProvider implements ShippingProvider {
     const rows = Array.isArray(body.data) ? body.data : [];
     return rows.map((row) => {
       const item = row as Record<string, unknown>;
+      const rawEvents = item.events ?? item.checkpoints ?? item.history ?? item.tracks;
+      const events = Array.isArray(rawEvents)
+        ? rawEvents.map((event) => {
+            const entry = event as Record<string, unknown>;
+            return {
+              description: String(entry.description ?? entry.status ?? entry.name ?? "Evento"),
+              date: entry.date ? String(entry.date) : undefined,
+            };
+          })
+        : [];
       return {
         trackingNumber: String(item.trackingNumber ?? item.tracking ?? ""),
         status: String(item.status ?? item.statusName ?? "Desconocido"),
-        events: [],
+        events,
       };
     });
   }

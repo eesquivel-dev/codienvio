@@ -22,12 +22,22 @@ export type HistoryShipment = {
   createdAt: string;
 };
 
-export function ShipmentHistory({ shipments }: { shipments: HistoryShipment[] }) {
+export function ShipmentHistory({
+  shipments,
+  initialStatus,
+  initialFrom,
+  initialTo,
+}: {
+  shipments: HistoryShipment[];
+  initialStatus?: string;
+  initialFrom?: string;
+  initialTo?: string;
+}) {
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(initialStatus?.trim() || "all");
   const [carrier, setCarrier] = useState("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState(initialFrom?.trim() ?? "");
+  const [to, setTo] = useState(initialTo?.trim() ?? "");
 
   const carriers = useMemo(
     () => [...new Set(shipments.map((item) => item.carrier))].sort(),

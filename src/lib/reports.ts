@@ -251,6 +251,27 @@ export function groupReportByDay(facts: ReportFact[]): ReportBreakdownRow[] {
   return [...map.values()].sort((a, b) => b.key.localeCompare(a.key));
 }
 
+/** Chronological daily series, filling empty days so dashboard charts stay aligned. */
+export function fillDailySeries(
+  rows: ReportBreakdownRow[],
+  from: string | null,
+  to: string | null,
+  maxPoints = 31,
+): ReportBreakdownRow[] {
+  if (!from || !to) {
+    return [...rows].sort((a, b) => a.key.localeCompare(b.key)).slice(-maxPoints);
+  }
+  const map = new Map(rows.map((row) => [row.key, row]));
+  const days: ReportBreakdownRow[] = [];
+  let cursor = from;
+  while (cursor <= to) {
+    days.push(map.get(cursor) ?? emptyBreakdown(cursor, cursor));
+    cursor = addCalendarDays(cursor, 1);
+    if (days.length > 400) break;
+  }
+  return days.slice(-maxPoints);
+}
+
 export function toCsv(headers: string[], rows: Array<Array<string | number | null | undefined>>): string {
   const escape = (value: string | number | null | undefined) => {
     if (value == null) return "";

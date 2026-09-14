@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TrackingStepper } from "@/components/tracking-stepper";
 import { clientCopy } from "@/lib/brand-copy";
 import { formatDateTimeMx } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -102,7 +103,7 @@ export function TrackingBar({
         </p>
       ) : null}
 
-      {result ? (
+          {result ? (
         <div
           className={
             dark
@@ -117,6 +118,9 @@ export function TrackingBar({
           <p className={cn("mt-1 text-sm", dark ? "text-white/75" : "text-muted-foreground")}>
             {[result.carrierLabel, result.serviceName].filter(Boolean).join(" · ") || "Guía Código Envío"}
           </p>
+          <div className="mt-4">
+            <TrackingStepper status={result.status} events={result.events} variant={dark ? "on-dark" : "on-light"} />
+          </div>
           {result.events.length === 0 ? (
             <p className={cn("mt-3 text-sm", dark ? "text-white/75" : "text-muted-foreground")}>
               {clientCopy.trackNoEvents}

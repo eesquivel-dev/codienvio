@@ -27,7 +27,7 @@ export function ListFilters({
   hasActiveFilters?: boolean;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="relative space-y-3">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Field label="Buscar" htmlFor="list-search">
           <Input

@@ -98,8 +98,8 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 
 ### Portal (cliente)
 
-- **Rastreo** (`/rastreo` y barra en la landing / portal): consulta pública por número de guía. Muestra estado y eventos; no expone precios ni datos del cliente.
-- **Inicio**: bienvenida + acción principal **Cotizar envío**.
+- **Rastreo** (`/rastreo` y barra en la landing / portal / detalle de guía): consulta pública por número de guía. Muestra un gráfico de avance (Creada → En tránsito → En ruta → Entregada), estado y eventos; no expone precios ni datos del cliente.
+- **Inicio**: dashboard del cliente — saldo, guías, gasto del mes, envíos recientes, acciones rápidas (cotizar, libreta, saldo, rastreo) y cotización. Los indicadores llevan al listado filtrado.
 - **Saldo** (`/portal/saldo`): recarga con Mercado Pago — **Pagar aquí** (Payment Brick: tarjeta, OXXO o SPEI) o **Pagar con Mercado Pago** (Checkout Pro). Un pago `approved` acredita `Client.balanceMxn` y un movimiento `TOP_UP` una sola vez; OXXO/SPEI pendientes los confirma el webhook.
 - Saldo prepagado visible en el encabezado y en la cotización. **Comprar guía** exige saldo ≥ precio de venta.
 - **Libreta** (`/portal/libreta`): direcciones (origen/destino) y paquetes guardados por cliente. Se eligen o se guardan desde el formulario de cotización.
@@ -112,13 +112,15 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 
 Separado del portal de cliente (`/portal`). Navegación:
 
-- **Dashboard** (`/admin`): pantalla de inicio del admin (el login redirige aquí). KPIs del periodo (hoy / 7 días / este mes / todo), comparación vs periodo anterior, desglose por cliente y paquetería, y actividad reciente.
-- **Reportes** (`/admin/reportes`): ventas, envíos, recargas de saldo y margen/comisión por cliente, paquetería y día. Filtros + export CSV.
-- **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger filtrable, API keys, libreta de direcciones/paquetes en solo lectura) y **Cargar saldo**.
+- **Dashboard** (`/admin`): KPIs clicables del periodo (hoy / 7 días / este mes / todo) hacia envíos, reportes, facturación o clientes filtrados; gráficas de envíos por día, ventas/margen y paquetería; desglose y actividad reciente.
+- **Reportes** (`/admin/reportes`): ventas, envíos, recargas de saldo y margen/comisión por cliente, paquetería y día. Autocompletado de clientes, filtros + export CSV.
+- **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro (activos, inactivos, saldo en $0, saldo bajo), detalle (empresa, comisión, saldo, ledger filtrable, API keys, libreta de direcciones/paquetes en solo lectura) y **Cargar saldo**.
 - **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key para Payment Brick, Checkout Pro con el access token, sin secretos) y API keys por cliente (búsqueda + filtro). iVoy sigue como próximo.
-- **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Búsqueda + filtros. Se puede marcar un mes como *facturado* (sin CFDI).
-- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente, con búsqueda, estado, paquetería y rango de fechas, más barra de rastreo por número de guía.
+- **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Autocompletado de clientes + filtros. Se puede marcar un mes como *facturado* (sin CFDI).
+- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente, con búsqueda, autocompletado de cliente, estado, paquetería y rango de fechas, más barra de rastreo por número de guía.
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
+
+Las pantallas internas del portal y del admin incluyen **Volver** (historial del navegador, con destino de respaldo). El menú global vive en el encabezado; el dashboard ya no duplica esos enlaces.
 
 Fuera de alcance todavía: timbrado CFDI de la recarga.
 

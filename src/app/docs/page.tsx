@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { BrandMark } from "@/components/brand-mark";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -16,9 +17,7 @@ export default function DocsPage() {
       </header>
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-12">
         <div>
-          <Link href="/" className="text-sm text-muted-foreground hover:underline">
-            ← Código Envío
-          </Link>
+          <BackLink href="/" label="Volver" />
           <h1 className="type-display-sm mt-2 text-navy">API pública v1</h1>
           <div className="mt-2 h-1 w-10 bg-lima" aria-hidden />
           <p className="type-body mt-2 text-muted-foreground">

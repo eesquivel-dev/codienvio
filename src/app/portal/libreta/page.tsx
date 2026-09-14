@@ -16,6 +16,7 @@ export default async function PortalLibretaPage() {
       <PageHeader
         title="Libreta"
         description={clientCopy.libretaLead}
+        backHref="/portal"
         actions={
           <Button asChild>
             <Link href="/portal#cotizar">Cotizar envío</Link>
