@@ -80,6 +80,27 @@ export default async function ShipmentDetailPage({
         backHref="/portal/envios"
       />
 
+      {tracking ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rastreo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <TrackingStepper status={tracking.status} events={tracking.events} />
+            {tracking.events?.length ? (
+              <div className="space-y-2 text-sm">
+                {tracking.events.map((event, index) => (
+                  <p key={index}>
+                    {event.date ? `${formatDateTimeMx(event.date)} · ` : null}
+                    {event.description}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -181,27 +202,6 @@ export default async function ShipmentDetailPage({
                 </p>
               </div>
             ))}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {tracking ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Rastreo</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <TrackingStepper status={tracking.status} events={tracking.events} />
-            {tracking.events?.length ? (
-              <div className="space-y-2 text-sm">
-                {tracking.events.map((event, index) => (
-                  <p key={index}>
-                    {event.date ? `${formatDateTimeMx(event.date)} · ` : null}
-                    {event.description}
-                  </p>
-                ))}
-              </div>
-            ) : null}
           </CardContent>
         </Card>
       ) : null}
