@@ -98,6 +98,7 @@ Tras `npm run db:seed`, inicia sesión con las cuentas demo.
 
 ### Portal (cliente)
 
+- **Rastreo** (`/rastreo` y barra en la landing / portal): consulta pública por número de guía. Muestra estado y eventos; no expone precios ni datos del cliente.
 - **Inicio**: bienvenida + acción principal **Cotizar envío**.
 - **Saldo** (`/portal/saldo`): recarga con Mercado Pago — **Pagar aquí** (Payment Brick: tarjeta, OXXO o SPEI) o **Pagar con Mercado Pago** (Checkout Pro). Un pago `approved` acredita `Client.balanceMxn` y un movimiento `TOP_UP` una sola vez; OXXO/SPEI pendientes los confirma el webhook.
 - Saldo prepagado visible en el encabezado y en la cotización. **Comprar guía** exige saldo ≥ precio de venta.
@@ -116,7 +117,7 @@ Separado del portal de cliente (`/portal`). Navegación:
 - **Clientes** (`/admin/clientes`): catálogo con búsqueda/filtro, detalle (empresa, comisión, saldo, ledger filtrable, API keys, libreta de direcciones/paquetes en solo lectura) y **Cargar saldo**.
 - **Integraciones** (`/admin/integraciones`): estado de Envía (token / env / mock), Mercado Pago (token / public key para Payment Brick, Checkout Pro con el access token, sin secretos) y API keys por cliente (búsqueda + filtro). iVoy sigue como próximo.
 - **Facturación** (`/admin/facturacion`): ventas y cargas de saldo, totales (precio cliente, comisión, costo Envía) y estado de cuenta mensual. Búsqueda + filtros. Se puede marcar un mes como *facturado* (sin CFDI).
-- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente, con búsqueda, estado, paquetería y rango de fechas.
+- **Envíos** (`/admin/envios`): costo Envia, comisión y precio al cliente, con búsqueda, estado, paquetería y rango de fechas, más barra de rastreo por número de guía.
 - **Configuración** (`/admin/configuracion`): token Envia, sandbox/producción, modo simulado, comisión % y cargo fijo MXN.
 
 Fuera de alcance todavía: timbrado CFDI de la recarga.
