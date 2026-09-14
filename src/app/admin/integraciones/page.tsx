@@ -23,6 +23,7 @@ export default async function IntegrationsPage() {
       <PageHeader
         title="Integraciones"
         description="Estado de Envía, Mercado Pago y llaves API por cliente. Los secretos nunca se muestran aquí."
+        backHref="/admin"
       />
       <IntegrationsCatalog
         envia={{

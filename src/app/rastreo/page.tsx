@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { TrackingBar } from "@/components/tracking-bar";
 import { Button } from "@/components/ui/button";
 import { clientCopy } from "@/lib/brand-copy";
+import { auth } from "@/lib/auth";
 
 export default async function PublicTrackingPage({
   searchParams,
@@ -12,6 +13,8 @@ export default async function PublicTrackingPage({
 }) {
   const params = await searchParams;
   const guia = params.guia?.trim() ?? "";
+  const session = await auth();
+  const backHref = session?.user?.role === "ADMIN" ? "/admin" : session?.user ? "/portal" : "/";
 
   return (
     <main className="min-h-screen bg-papel">
@@ -19,13 +22,19 @@ export default async function PublicTrackingPage({
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <BrandMark href="/" variant="on-dark" size="sm" />
           <Button asChild variant="inverse" size="sm">
-            <Link href="/login">Iniciar sesión</Link>
+            <Link href={session?.user ? backHref : "/login"}>
+              {session?.user ? "Ir al panel" : "Iniciar sesión"}
+            </Link>
           </Button>
         </div>
         <div className="h-0.5 bg-lima" aria-hidden />
       </header>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-        <PageHeader title={clientCopy.trackPageTitle} description={clientCopy.trackPageLead} />
+        <PageHeader
+          title={clientCopy.trackPageTitle}
+          description={clientCopy.trackPageLead}
+          backHref={backHref}
+        />
         <TrackingBar initialGuia={guia} />
       </div>
     </main>

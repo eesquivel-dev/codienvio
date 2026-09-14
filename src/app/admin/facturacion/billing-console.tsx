@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { markBillingPeriodAction } from "@/app/admin/actions";
+import { ClientTypeahead } from "@/components/client-typeahead";
 import { Field } from "@/components/field";
 import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
@@ -41,6 +42,10 @@ export function BillingConsole({
   defaultMonth,
   defaultFrom,
   defaultTo,
+  initialFrom,
+  initialTo,
+  initialKind,
+  initialClientId,
 }: {
   events: BillingEvent[];
   clients: Array<{ id: string; companyName: string; balanceMxn: number; active: boolean }>;
@@ -49,13 +54,21 @@ export function BillingConsole({
   defaultMonth: number;
   defaultFrom: string;
   defaultTo: string;
+  initialFrom?: string;
+  initialTo?: string;
+  initialKind?: string;
+  initialClientId?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [statementClientId, setStatementClientId] = useState(clients[0]?.id ?? "");
-  const [from, setFrom] = useState(defaultFrom);
-  const [to, setTo] = useState(defaultTo);
-  const [kind, setKind] = useState<BillingEventKind | "ALL">("ALL");
+  const [clientId, setClientId] = useState(initialClientId?.trim() ?? "");
+  const [statementClientId, setStatementClientId] = useState(initialClientId?.trim() || clients[0]?.id || "");
+  const [from, setFrom] = useState(initialFrom?.trim() || defaultFrom);
+  const [to, setTo] = useState(initialTo?.trim() || defaultTo);
+  const [kind, setKind] = useState<BillingEventKind | "ALL">(
+    initialKind === "SALE" || initialKind === "TOP_UP" || initialKind === "ADJUSTMENT"
+      ? initialKind
+      : "ALL",
+  );
   const [year, setYear] = useState(String(defaultYear));
   const [month, setMonth] = useState(String(defaultMonth));
   const [note, setNote] = useState("");
@@ -140,24 +153,24 @@ export function BillingConsole({
           setTo(defaultTo);
         }}
       >
-        <Field label="Cliente" htmlFor="billing-client">
-          <NativeSelect
-            id="billing-client"
-            value={clientId}
-            onChange={(e) => {
-              setClientId(e.target.value);
-              if (e.target.value) setStatementClientId(e.target.value);
-            }}
-          >
-            <option value="">Todos los clientes</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.companyName}
-                {client.active ? "" : " (inactivo)"}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
+        <ClientTypeahead
+          id="billing-client"
+          value={clientId}
+          onChange={(id) => {
+            setClientId(id);
+            if (id) setStatementClientId(id);
+          }}
+          initialSelected={
+            clients
+              .filter((client) => client.id === (initialClientId ?? clientId))
+              .map((client) => ({
+                id: client.id,
+                companyName: client.companyName,
+                email: "",
+                active: client.active,
+              }))[0] ?? null
+          }
+        />
         <Field label="Tipo" htmlFor="billing-kind">
           <NativeSelect
             id="billing-kind"
@@ -296,20 +309,24 @@ export function BillingConsole({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Cliente" htmlFor="stmt-client">
-              <NativeSelect
-                id="stmt-client"
-                value={statementClientId}
-                onChange={(e) => setStatementClientId(e.target.value)}
-              >
-                {clients.length === 0 ? <option value="">Sin clientes</option> : null}
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.companyName}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
+            <ClientTypeahead
+              id="stmt-client"
+              label="Cliente"
+              value={statementClientId}
+              allowAll={false}
+              placeholder="Busca el cliente del estado de cuenta"
+              onChange={setStatementClientId}
+              initialSelected={
+                clients
+                  .filter((client) => client.id === statementClientId)
+                  .map((client) => ({
+                    id: client.id,
+                    companyName: client.companyName,
+                    email: "",
+                    active: client.active,
+                  }))[0] ?? null
+              }
+            />
             <Field label="Mes" htmlFor="stmt-month">
               <NativeSelect id="stmt-month" value={month} onChange={(e) => setMonth(e.target.value)}>
                 {Array.from({ length: 12 }, (_, index) => (

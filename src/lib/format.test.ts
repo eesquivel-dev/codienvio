@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carrierLabel, shipmentStatusLabel } from "@/lib/format";
+import { carrierLabel, shipmentStatusLabel, trackingStatusLabel } from "@/lib/format";
 
 describe("format", () => {
   it("nombra paqueterías conocidas", () => {
@@ -11,5 +11,13 @@ describe("format", () => {
   it("traduce estados de envío", () => {
     expect(shipmentStatusLabel("PURCHASED")).toBe("Comprada");
     expect(shipmentStatusLabel("FAILED")).toBe("Fallida");
+  });
+
+  it("traduce el ciclo de rastreo", () => {
+    expect(trackingStatusLabel("Created")).toBe("Creada");
+    expect(trackingStatusLabel("In Transit")).toBe("En tránsito");
+    expect(trackingStatusLabel("Out for Delivery")).toBe("En ruta");
+    expect(trackingStatusLabel("out_for_delivery")).toBe("En ruta");
+    expect(trackingStatusLabel("Delivered")).toBe("Entregada");
   });
 });

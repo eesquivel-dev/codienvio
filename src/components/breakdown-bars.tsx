@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatMxn } from "@/lib/money";
 import type { ReportBreakdownRow } from "@/lib/reports";
 
@@ -5,10 +6,12 @@ export function BreakdownBars({
   rows,
   empty,
   valueKey = "clientPrice",
+  hrefFor,
 }: {
   rows: ReportBreakdownRow[];
   empty: string;
   valueKey?: "clientPrice" | "fee" | "topUp";
+  hrefFor?: (row: ReportBreakdownRow) => string;
 }) {
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground">{empty}</p>;
@@ -19,8 +22,9 @@ export function BreakdownBars({
       {rows.map((row) => {
         const value = Number(row[valueKey]);
         const width = Math.max(4, Math.round((value / max) * 100));
-        return (
-          <li key={row.key}>
+        const href = hrefFor?.(row);
+        const inner = (
+          <>
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="font-medium text-navy">{row.label}</span>
               <span className="tabular-nums text-muted-foreground">
@@ -31,6 +35,17 @@ export function BreakdownBars({
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-lima" style={{ width: `${width}%` }} />
             </div>
+          </>
+        );
+        return (
+          <li key={row.key}>
+            {href ? (
+              <Link href={href} className="block rounded-md hover:bg-lima/10">
+                {inner}
+              </Link>
+            ) : (
+              inner
+            )}
           </li>
         );
       })}

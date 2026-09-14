@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import { asMoney } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { getActiveProvider, getDefaultFeeRule } from "@/lib/settings";
+import { lookupPublicTracking } from "@/lib/tracking-data";
 import type { AddressInput, QuoteRequestInput } from "@/lib/validations";
 import { quoteRequestSchema } from "@/lib/validations";
 import {
@@ -348,15 +349,19 @@ export async function getShipmentTracking(clientId: string, shipmentId: string) 
       events: [] as Array<{ description: string; date?: string }>,
     };
   }
-  const provider = await getActiveProvider();
-  const rows = await provider.track([shipment.trackingNumber]);
-  return (
-    rows[0] ?? {
-      trackingNumber: shipment.trackingNumber,
-      status: shipment.status,
-      events: [],
-    }
-  );
+  const publicView = await lookupPublicTracking(shipment.trackingNumber);
+  if (publicView) {
+    return {
+      trackingNumber: publicView.trackingNumber,
+      status: publicView.status,
+      events: publicView.events,
+    };
+  }
+  return {
+    trackingNumber: shipment.trackingNumber,
+    status: shipment.status === "FAILED" ? "Exception" : "Created",
+    events: [],
+  };
 }
 
 export async function listAllShipments() {
@@ -369,6 +374,7 @@ export async function listAllShipments() {
     ...toPublicShipment(shipment),
     providerCost: asMoney(shipment.providerCost),
     feeAmount: asMoney(shipment.feeAmount),
+    clientId: shipment.clientId,
     clientName: shipment.client.companyName,
     clientEmail: shipment.client.user.email,
   }));

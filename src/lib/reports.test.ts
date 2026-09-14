@@ -3,6 +3,7 @@ import {
   addCalendarDays,
   calendarDayDiff,
   filterReportFacts,
+  fillDailySeries,
   groupReportByCarrier,
   groupReportByClient,
   groupReportByDay,
@@ -245,6 +246,35 @@ describe("report breakdowns", () => {
     expect(byDay).toHaveLength(2);
     expect(byDay.find((row) => row.key === "2026-09-12")?.clientPrice).toBe(12);
     expect(byDay.find((row) => row.key === "2026-09-13")?.clientPrice).toBe(24);
+  });
+
+  it("rellena días vacíos para las gráficas", () => {
+    const filled = fillDailySeries(
+      [
+        {
+          key: "2026-09-10",
+          label: "2026-09-10",
+          salesCount: 2,
+          failedCount: 0,
+          shipmentCount: 2,
+          clientPrice: 180,
+          fee: 30,
+          providerCost: 150,
+          topUpCount: 0,
+          topUp: 0,
+        },
+      ],
+      "2026-09-08",
+      "2026-09-11",
+    );
+    expect(filled.map((row) => row.key)).toEqual([
+      "2026-09-08",
+      "2026-09-09",
+      "2026-09-10",
+      "2026-09-11",
+    ]);
+    expect(filled[2]?.salesCount).toBe(2);
+    expect(filled[0]?.salesCount).toBe(0);
   });
 });
 

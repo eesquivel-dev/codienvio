@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { requireClient } from "@/lib/auth";
 import { listShipments } from "@/lib/services/shipping";
 
-export default async function PortalShipmentsPage() {
+export default async function PortalShipmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; from?: string; to?: string }>;
+}) {
   const session = await requireClient();
+  const params = await searchParams;
   const shipments = await listShipments(session.user.clientId!);
 
   return (
@@ -14,13 +19,19 @@ export default async function PortalShipmentsPage() {
       <PageHeader
         title="Mis envíos"
         description="Historial de guías compradas. Filtra por estado, paquetería o número de rastreo."
+        backHref="/portal"
         actions={
           <Button asChild>
             <Link href="/portal#cotizar">Cotizar envío</Link>
           </Button>
         }
       />
-      <ShipmentHistory shipments={shipments} />
+      <ShipmentHistory
+        shipments={shipments}
+        initialStatus={params.status}
+        initialFrom={params.from}
+        initialTo={params.to}
+      />
     </div>
   );
 }

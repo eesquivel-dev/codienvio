@@ -6,8 +6,13 @@ import { requireAdmin } from "@/lib/auth";
 import { clientCopy } from "@/lib/brand-copy";
 import { listAllShipments } from "@/lib/services/shipping";
 
-export default async function AdminShipmentsPage() {
+export default async function AdminShipmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; from?: string; to?: string; clientId?: string; carrier?: string }>;
+}) {
   await requireAdmin();
+  const params = await searchParams;
   const shipments = await listAllShipments();
 
   return (
@@ -15,6 +20,7 @@ export default async function AdminShipmentsPage() {
       <PageHeader
         title="Envíos y margen"
         description="Vista admin: costo Envia, comisión y precio al cliente. Los clientes nunca ven el costo del proveedor."
+        backHref="/admin"
       />
       <Card>
         <CardHeader>
@@ -25,7 +31,14 @@ export default async function AdminShipmentsPage() {
           <TrackingBar id="admin-rastreo" />
         </CardContent>
       </Card>
-      <AdminShipmentsTable shipments={shipments} />
+      <AdminShipmentsTable
+        shipments={shipments}
+        initialStatus={params.status}
+        initialFrom={params.from}
+        initialTo={params.to}
+        initialClientId={params.clientId}
+        initialCarrier={params.carrier}
+      />
     </div>
   );
 }

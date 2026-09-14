@@ -1,6 +1,10 @@
+import { LOW_BALANCE_MXN } from "@/lib/dashboard";
+import { countLowBalanceClients } from "@/lib/client-catalog";
+import { toMxDateString } from "@/lib/billing";
 import { asMoney } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import {
+  fillDailySeries,
   filterReportFacts,
   groupReportByCarrier,
   groupReportByClient,
@@ -143,28 +147,36 @@ export type OperatorDashboard = {
   byClient: ReturnType<typeof groupReportByClient>;
   byCarrier: ReturnType<typeof groupReportByCarrier>;
   byDay: ReturnType<typeof groupReportByDay>;
+  byDaySeries: ReturnType<typeof fillDailySeries>;
   recent: ReportFact[];
   snapshot: {
     activeClients: number;
     clientCount: number;
     walletTotal: number;
+    lowBalanceClients: number;
+    lowBalanceThreshold: number;
   };
 };
 
 export async function getOperatorDashboard(periodInput?: string | null): Promise<OperatorDashboard> {
   const period = parseReportPeriod(periodInput);
   const range = reportPeriodRange(period);
-  const [facts, walletAgg, activeClients, clientCount] = await Promise.all([
+  const [facts, walletAgg, activeClients, clientCount, lowBalanceClients] = await Promise.all([
     listAdminReportFacts(),
     prisma.client.aggregate({ _sum: { balanceMxn: true } }),
     prisma.client.count({ where: { active: true } }),
     prisma.client.count(),
+    countLowBalanceClients(),
   ]);
 
   const currentFacts = filterReportFacts(facts, range);
   const totals = sumReportTotals(currentFacts);
   const prevRange = range.from && range.to ? previousPeriodRange(range.from, range.to) : null;
   const previous = prevRange ? sumReportTotals(filterReportFacts(facts, prevRange)) : null;
+
+  const today = toMxDateString(new Date());
+  const chartTo = range.to && range.to > today ? today : range.to;
+  const byDay = groupReportByDay(currentFacts);
 
   return {
     period,
@@ -181,12 +193,15 @@ export async function getOperatorDashboard(periodInput?: string | null): Promise
     },
     byClient: groupReportByClient(currentFacts).slice(0, 6),
     byCarrier: groupReportByCarrier(currentFacts).slice(0, 6),
-    byDay: groupReportByDay(currentFacts).slice(0, 14),
+    byDay: byDay.slice(0, 14),
+    byDaySeries: fillDailySeries(byDay, range.from, chartTo, 14),
     recent: currentFacts.slice(0, 10),
     snapshot: {
       activeClients,
       clientCount,
       walletTotal: asMoney(walletAgg._sum.balanceMxn ?? 0),
+      lowBalanceClients,
+      lowBalanceThreshold: LOW_BALANCE_MXN,
     },
   };
 }

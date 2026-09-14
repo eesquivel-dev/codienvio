@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, ExternalLink, MapPin, Package } from "lucide-react";
+import { TrackingStepper } from "@/components/tracking-stepper";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -77,11 +77,7 @@ export default async function ShipmentDetailPage({
       <PageHeader
         title={`Guía ${shipment.trackingNumber ?? shipment.id.slice(0, 8)}`}
         description={`${carrierLabel(shipment.carrier)} · ${shipment.serviceName ?? shipment.service} · ${formatDateTimeMx(shipment.createdAt)}`}
-        actions={
-          <Button asChild variant="outline">
-            <Link href="/portal/envios">← Mis envíos</Link>
-          </Button>
-        }
+        backHref="/portal/envios"
       />
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -189,18 +185,23 @@ export default async function ShipmentDetailPage({
         </Card>
       ) : null}
 
-      {tracking?.events?.length ? (
+      {tracking ? (
         <Card>
           <CardHeader>
-            <CardTitle>Eventos de rastreo</CardTitle>
+            <CardTitle>Rastreo</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {tracking.events.map((event, index) => (
-              <p key={index}>
-                {event.date ? `${event.date} · ` : null}
-                {event.description}
-              </p>
-            ))}
+          <CardContent className="space-y-4">
+            <TrackingStepper status={tracking.status} events={tracking.events} />
+            {tracking.events?.length ? (
+              <div className="space-y-2 text-sm">
+                {tracking.events.map((event, index) => (
+                  <p key={index}>
+                    {event.date ? `${formatDateTimeMx(event.date)} · ` : null}
+                    {event.description}
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

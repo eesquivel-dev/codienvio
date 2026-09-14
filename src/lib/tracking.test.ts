@@ -51,7 +51,7 @@ describe("mockPublicTracking", () => {
     expect(view.events[0]?.description).toMatch(/no se pudo/i);
   });
 
-  it("avanza Created → tránsito → entregada según la antigüedad", () => {
+  it("avanza Created → tránsito → en ruta → entregada según la antigüedad", () => {
     expect(
       mockPublicTracking({
         trackingNumber: "CE1",
@@ -63,7 +63,7 @@ describe("mockPublicTracking", () => {
     expect(
       mockPublicTracking({
         trackingNumber: "CE2",
-        createdAt: "2026-09-12T12:00:00.000Z",
+        createdAt: "2026-09-13T12:00:00.000Z",
         shipmentStatus: "PURCHASED",
         now,
       }).status,
@@ -71,6 +71,14 @@ describe("mockPublicTracking", () => {
     expect(
       mockPublicTracking({
         trackingNumber: "CE3",
+        createdAt: "2026-09-12T12:00:00.000Z",
+        shipmentStatus: "PURCHASED",
+        now,
+      }).status,
+    ).toBe("Out for Delivery");
+    expect(
+      mockPublicTracking({
+        trackingNumber: "CE4",
         createdAt: "2026-09-10T12:00:00.000Z",
         shipmentStatus: "PURCHASED",
         now,

@@ -9,6 +9,7 @@ export default async function AdminSettingsPage() {
       <PageHeader
         title="Configuración"
         description="Token de Envia, ambiente sandbox/producción y comisión global. Los secretos nunca salen al navegador en texto plano después de guardarse."
+        backHref="/admin"
       />
       <SettingsForm settings={settings} />
     </div>

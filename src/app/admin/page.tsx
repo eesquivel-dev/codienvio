@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   BadgePercent,
@@ -7,15 +6,25 @@ import {
   Store,
   Users,
   Wallet,
+  AlertTriangle,
 } from "lucide-react";
 import { getOperatorDashboard } from "@/lib/reports-data";
-import { BreakdownBars, DaySparkBars } from "@/components/breakdown-bars";
+import { AreaChart, DonutChart, DualMetricChart } from "@/components/charts";
+import { BreakdownBars } from "@/components/breakdown-bars";
+import { KpiCard } from "@/components/kpi-card";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth";
+import {
+  adminClientesHref,
+  adminEnviosHref,
+  adminFacturacionHref,
+  adminReportesHref,
+  LOW_BALANCE_MXN,
+} from "@/lib/dashboard";
 import { carrierLabel, formatDateTimeMx } from "@/lib/format";
 import { formatMxn } from "@/lib/money";
 import {
@@ -35,21 +44,17 @@ export default async function AdminDashboardPage({
   const params = await searchParams;
   const period = parseReportPeriod(params.periodo);
   const stats = await getOperatorDashboard(period);
+  const range = { from: stats.range.from, to: stats.range.to };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Operación de Código Envío: ventas, margen, recargas y actividad reciente. Costos de paquetería y comisiones solo se ven aquí."
+        description="Operación de Código Envío: toca un indicador para ver el detalle filtrado. Costos de paquetería y comisiones solo se ven aquí."
         actions={
-          <>
-            <Button asChild>
-              <Link href="/admin/reportes">Abrir reportes</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/admin/configuracion">Configuración</Link>
-            </Button>
-          </>
+          <Button asChild>
+            <Link href={adminReportesHref(range)}>Abrir reportes</Link>
+          </Button>
         }
       />
 
@@ -69,10 +74,11 @@ export default async function AdminDashboardPage({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           icon={<Store className="h-4 w-4" />}
-          label="Ventas"
+          label="Envíos comprados"
           value={String(stats.kpis.salesCount.current)}
-          hint={`${stats.totals.purchasedCount} guías compradas`}
+          hint={`${formatMxn(stats.kpis.clientPrice.current)} al cliente`}
           change={stats.kpis.salesCount.change}
+          href={adminEnviosHref({ status: "PURCHASED", ...range })}
         />
         <KpiCard
           icon={<BadgePercent className="h-4 w-4" />}
@@ -80,6 +86,7 @@ export default async function AdminDashboardPage({
           value={formatMxn(stats.kpis.fee.current)}
           hint="Comisión del periodo"
           change={stats.kpis.fee.change}
+          href={adminReportesHref({ kind: "SALE", ...range })}
         />
         <KpiCard
           icon={<Wallet className="h-4 w-4" />}
@@ -87,6 +94,7 @@ export default async function AdminDashboardPage({
           value={formatMxn(stats.kpis.clientPrice.current)}
           hint={`Costo Envía ${formatMxn(stats.kpis.providerCost.current)}`}
           change={stats.kpis.clientPrice.change}
+          href={adminReportesHref({ kind: "SALE", ...range })}
         />
         <KpiCard
           icon={<PackageCheck className="h-4 w-4" />}
@@ -94,6 +102,7 @@ export default async function AdminDashboardPage({
           value={formatMxn(stats.kpis.topUp.current)}
           hint={`${stats.totals.topUpCount} cargas de saldo`}
           change={stats.kpis.topUp.change}
+          href={adminFacturacionHref({ kind: "TOP_UP", ...range })}
         />
         <KpiCard
           icon={<PackageX className="h-4 w-4" />}
@@ -101,37 +110,84 @@ export default async function AdminDashboardPage({
           value={String(stats.kpis.failedCount.current)}
           hint={stats.totals.shipmentCount ? `${stats.totals.shipmentCount} envíos en total` : "Sin envíos"}
           change={stats.kpis.failedCount.change}
+          href={adminEnviosHref({ status: "FAILED", ...range })}
         />
         <KpiCard
           icon={<Users className="h-4 w-4" />}
           label="Clientes activos"
           value={String(stats.snapshot.activeClients)}
           hint={`${stats.snapshot.clientCount} en catálogo`}
+          href={adminClientesHref("active")}
+        />
+        <KpiCard
+          icon={<AlertTriangle className="h-4 w-4" />}
+          label="Saldo bajo"
+          value={String(stats.snapshot.lowBalanceClients)}
+          hint={`Activos con menos de ${formatMxn(LOW_BALANCE_MXN)}`}
+          href={adminClientesHref("low")}
         />
         <KpiCard
           icon={<Wallet className="h-4 w-4" />}
           label="Saldo en wallets"
           value={formatMxn(stats.snapshot.walletTotal)}
           hint="Saldo prepagado actual"
+          href={adminClientesHref()}
         />
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
-              Ventas por día
-            </CardTitle>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Envíos por día</CardTitle>
+            <CardDescription>Guías compradas y fallidas en el periodo.</CardDescription>
           </CardHeader>
           <CardContent>
-            {stats.byDay.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin ventas en este periodo.</p>
-            ) : (
-              <>
-                <DaySparkBars rows={stats.byDay} />
-                <p className="type-caption mt-2 text-muted-foreground">Precio al cliente, últimos días del periodo</p>
-              </>
-            )}
+            <AreaChart
+              points={stats.byDaySeries.map((row) => ({ label: row.key, value: row.shipmentCount }))}
+              empty="Sin envíos en este periodo."
+              valueLabel={(value) => `${value} envíos`}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Por paquetería</CardTitle>
+            <CardDescription>Guías compradas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DonutChart
+              slices={stats.byCarrier.map((row) => ({
+                key: row.key,
+                label: row.label,
+                value: row.salesCount,
+              }))}
+              empty="Aún no hay envíos con paquetería en este periodo."
+              valueLabel={(value) => `${value} guías`}
+            />
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ventas y margen</CardTitle>
+          <CardDescription>Precio al cliente frente a comisión, por día.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DualMetricChart
+            points={stats.byDaySeries.map((row) => ({
+              label: row.key,
+              primary: row.clientPrice,
+              secondary: row.fee,
+            }))}
+            empty="Sin ventas en este periodo."
+            primaryLabel="Ingreso cliente"
+            secondaryLabel="Margen"
+            formatPrimary={formatMxn}
+            formatSecondary={formatMxn}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -140,16 +196,24 @@ export default async function AdminDashboardPage({
             <CardDescription>Ingreso (precio al cliente) en el periodo seleccionado.</CardDescription>
           </CardHeader>
           <CardContent>
-            <BreakdownBars rows={stats.byClient} empty="Aún no hay ventas ni recargas en este periodo." />
+            <BreakdownBars
+              rows={stats.byClient}
+              empty="Aún no hay ventas ni recargas en este periodo."
+              hrefFor={(row) => adminReportesHref({ clientId: row.key, ...range })}
+            />
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Por paquetería</CardTitle>
-            <CardDescription>Guías compradas agrupadas por carrier.</CardDescription>
+            <CardTitle>Detalle por paquetería</CardTitle>
+            <CardDescription>Abre los envíos de ese carrier.</CardDescription>
           </CardHeader>
           <CardContent>
-            <BreakdownBars rows={stats.byCarrier} empty="Aún no hay envíos con paquetería en este periodo." />
+            <BreakdownBars
+              rows={stats.byCarrier}
+              empty="Aún no hay envíos con paquetería en este periodo."
+              hrefFor={(row) => adminEnviosHref({ carrier: row.key, status: "PURCHASED", ...range })}
+            />
           </CardContent>
         </Card>
       </div>
@@ -161,7 +225,7 @@ export default async function AdminDashboardPage({
             <CardDescription>Ventas, recargas, ajustes y fallos del periodo.</CardDescription>
           </div>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/envios">Ver envíos</Link>
+            <Link href={adminEnviosHref(range)}>Ver envíos</Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -175,13 +239,6 @@ export default async function AdminDashboardPage({
           )}
         </CardContent>
       </Card>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <CatalogLink href="/admin/reportes" title="Reportes" hint="Ventas, recargas, margen y CSV" />
-        <CatalogLink href="/admin/clientes" title="Clientes" hint="Cuentas, comisiones y saldo" />
-        <CatalogLink href="/admin/facturacion" title="Facturación" hint="Movimientos y estado de cuenta" />
-        <CatalogLink href="/admin/integraciones" title="Integraciones" hint="Envía, API keys y Mercado Pago" />
-      </div>
     </div>
   );
 }
@@ -210,58 +267,17 @@ function PeriodChip({
   );
 }
 
-function CatalogLink({ href, title, hint }: { href: string; title: string; hint: string }) {
-  return (
-    <Link
-      href={href}
-      className="rounded-lg border border-navy/10 bg-white px-4 py-3 transition-colors hover:border-lima hover:bg-lima/10"
-    >
-      <p className="font-semibold text-navy">{title}</p>
-      <p className="type-caption text-muted-foreground">{hint}</p>
-    </Link>
-  );
-}
-
-function KpiCard({
-  icon,
-  label,
-  value,
-  hint,
-  change,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  hint: string;
-  change?: number | null;
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-[0.8125rem] font-medium tracking-[-0.011em] text-muted-foreground">
-          {icon}
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold tracking-[-0.03em] tabular-nums text-navy">{value}</p>
-        <p className="type-caption mt-1 text-muted-foreground">{hint}</p>
-        {change != null ? (
-          <p className={`type-caption mt-1 ${change >= 0 ? "text-navy" : "text-destructive"}`}>
-            {change > 0 ? "+" : ""}
-            {change}% vs periodo anterior
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
 function ActivityRow({ item }: { item: ReportFact }) {
   const isSale = item.kind === "SALE";
   const isFail = item.kind === "FAILED_SHIPMENT";
+  const href = isFail || isSale
+    ? adminEnviosHref({ status: isFail ? "FAILED" : "PURCHASED", clientId: item.clientId })
+    : adminFacturacionHref({ kind: item.kind === "TOP_UP" ? "TOP_UP" : "ADJUSTMENT", clientId: item.clientId });
   return (
-    <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+    <Link
+      href={href}
+      className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:border-lima hover:bg-lima/10 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{item.clientName}</p>
@@ -287,6 +303,6 @@ function ActivityRow({ item }: { item: ReportFact }) {
           <span className="font-semibold tabular-nums text-navy">{formatMxn(item.walletAmount ?? 0)}</span>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

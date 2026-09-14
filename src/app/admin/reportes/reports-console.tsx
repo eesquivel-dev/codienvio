@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BreakdownBars } from "@/components/breakdown-bars";
 import { ExportCsvButton } from "@/components/export-csv-button";
+import { ClientTypeahead } from "@/components/client-typeahead";
 import { Field } from "@/components/field";
 import { DateRangeFields, ListFilters } from "@/components/list-filters";
 import { NativeSelect } from "@/components/native-select";
@@ -30,19 +31,36 @@ export function ReportsConsole({
   carriers,
   defaultFrom,
   defaultTo,
+  initialFrom,
+  initialTo,
+  initialKind,
+  initialClientId,
+  initialCarrier,
 }: {
   facts: ReportFact[];
   clients: Array<{ id: string; companyName: string; active: boolean }>;
   carriers: string[];
   defaultFrom: string;
   defaultTo: string;
+  initialFrom?: string;
+  initialTo?: string;
+  initialKind?: string;
+  initialClientId?: string;
+  initialCarrier?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [carrier, setCarrier] = useState("");
-  const [kind, setKind] = useState<ReportFactKind | "ALL">("ALL");
-  const [from, setFrom] = useState(defaultFrom);
-  const [to, setTo] = useState(defaultTo);
+  const [clientId, setClientId] = useState(initialClientId?.trim() ?? "");
+  const [carrier, setCarrier] = useState(initialCarrier?.trim() ?? "");
+  const [kind, setKind] = useState<ReportFactKind | "ALL">(
+    initialKind === "SALE" ||
+      initialKind === "FAILED_SHIPMENT" ||
+      initialKind === "TOP_UP" ||
+      initialKind === "ADJUSTMENT"
+      ? initialKind
+      : "ALL",
+  );
+  const [from, setFrom] = useState(initialFrom?.trim() || defaultFrom);
+  const [to, setTo] = useState(initialTo?.trim() || defaultTo);
 
   const filtered = useMemo(
     () => filterReportFacts(facts, { query, clientId, carrier, kind, from, to }),
@@ -78,17 +96,21 @@ export function ReportsConsole({
         hasActiveFilters={hasActiveFilters}
         onClear={clearFilters}
       >
-        <Field label="Cliente" htmlFor="report-client">
-          <NativeSelect id="report-client" value={clientId} onChange={(event) => setClientId(event.target.value)}>
-            <option value="">Todos los clientes</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.companyName}
-                {client.active ? "" : " (inactivo)"}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
+        <ClientTypeahead
+          id="report-client"
+          value={clientId}
+          onChange={setClientId}
+          initialSelected={
+            clients
+              .filter((client) => client.id === clientId)
+              .map((client) => ({
+                id: client.id,
+                companyName: client.companyName,
+                email: "",
+                active: client.active,
+              }))[0] ?? null
+          }
+        />
         <Field label="Paquetería" htmlFor="report-carrier">
           <NativeSelect id="report-carrier" value={carrier} onChange={(event) => setCarrier(event.target.value)}>
             <option value="">Todas</option>
