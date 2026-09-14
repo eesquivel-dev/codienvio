@@ -13,6 +13,7 @@ const CLIENT_FACING_FILES = [
   "src/app/portal/page.tsx",
   "src/app/portal/saldo/page.tsx",
   "src/app/portal/envios/page.tsx",
+  "src/app/portal/envios/[id]/page.tsx",
   "src/app/portal/libreta/page.tsx",
   "src/app/portal/libreta/address-book.tsx",
   "src/app/portal/libreta/package-presets.tsx",

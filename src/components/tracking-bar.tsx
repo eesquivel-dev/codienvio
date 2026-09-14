@@ -115,12 +115,12 @@ export function TrackingBar({
             <p className="font-mono text-sm font-semibold">{result.trackingNumber}</p>
             <p className="text-sm font-semibold">{result.statusLabel}</p>
           </div>
-          <p className={cn("mt-1 text-sm", dark ? "text-white/75" : "text-muted-foreground")}>
-            {[result.carrierLabel, result.serviceName].filter(Boolean).join(" · ") || "Guía Código Envío"}
-          </p>
           <div className="mt-4">
             <TrackingStepper status={result.status} events={result.events} variant={dark ? "on-dark" : "on-light"} />
           </div>
+          <p className={cn("mt-3 text-sm", dark ? "text-white/75" : "text-muted-foreground")}>
+            {[result.carrierLabel, result.serviceName].filter(Boolean).join(" · ") || "Guía Código Envío"}
+          </p>
           {result.events.length === 0 ? (
             <p className={cn("mt-3 text-sm", dark ? "text-white/75" : "text-muted-foreground")}>
               {clientCopy.trackNoEvents}
