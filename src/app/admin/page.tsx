@@ -156,11 +156,13 @@ export default async function AdminDashboardPage({
           </CardHeader>
           <CardContent>
             <DonutChart
-              slices={stats.byCarrier.map((row) => ({
-                key: row.key,
-                label: row.label,
-                value: row.salesCount,
-              }))}
+              slices={stats.byCarrier
+                .filter((row) => row.salesCount > 0)
+                .map((row) => ({
+                  key: row.key,
+                  label: row.label,
+                  value: row.salesCount,
+                }))}
               empty="Aún no hay envíos con paquetería en este periodo."
               valueLabel={(value) => `${value} guías`}
             />

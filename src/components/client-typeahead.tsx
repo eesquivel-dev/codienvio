@@ -129,7 +129,7 @@ export function ClientTypeahead({
 
   return (
     <Field label={label} htmlFor={inputId}>
-      <div className="relative">
+      <div className={cn("relative", open && "z-40")}>
         <Input
           id={inputId}
           role="combobox"
@@ -171,7 +171,7 @@ export function ClientTypeahead({
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-navy/10 bg-white py-1 shadow-lg"
+            className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border border-navy/10 bg-white py-1 shadow-lg"
           >
             {showAllRow ? (
               <li>

@@ -13,10 +13,18 @@ function maxValue(values: number[], fallback = 1): number {
 
 function niceMax(value: number): number {
   if (value <= 0) return 1;
+  if (value <= 5) return Math.ceil(value);
   const magnitude = 10 ** Math.floor(Math.log10(value));
   const normalized = value / magnitude;
   const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
   return nice * magnitude;
+}
+
+function axisTicks(max: number): number[] {
+  if (max <= 5 && Number.isInteger(max)) {
+    return Array.from({ length: max + 1 }, (_, index) => index);
+  }
+  return [0, 0.5, 1].map((ratio) => max * ratio);
 }
 
 function formatAxis(value: number): string {
@@ -59,9 +67,9 @@ export function AreaChart({
   });
   const line = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
   const area = `${line} L${coords[coords.length - 1].x.toFixed(1)} ${PAD.top + innerH} L${coords[0].x.toFixed(1)} ${PAD.top + innerH} Z`;
-  const ticks = [0, 0.5, 1].map((ratio) => ({
-    y: PAD.top + innerH * (1 - ratio),
-    value: max * ratio,
+  const ticks = axisTicks(max).map((value) => ({
+    y: PAD.top + innerH - (value / max) * innerH,
+    value,
   }));
   const labelEvery = Math.max(1, Math.ceil(points.length / 7));
 
@@ -130,9 +138,9 @@ export function DualMetricChart({
   const groupW = innerW / points.length;
   const barW = Math.max(4, Math.min(14, groupW * 0.32));
   const labelEvery = Math.max(1, Math.ceil(points.length / 7));
-  const ticks = [0, 0.5, 1].map((ratio) => ({
-    y: PAD.top + innerH * (1 - ratio),
-    value: max * ratio,
+  const ticks = axisTicks(max).map((value) => ({
+    y: PAD.top + innerH - (value / max) * innerH,
+    value,
   }));
 
   return (
