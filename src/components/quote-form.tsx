@@ -9,6 +9,7 @@ import {
   createSavedPackageAction,
   quoteAction,
 } from "@/app/portal/actions";
+import { ColoniaCombobox } from "@/components/colonia-combobox";
 import { Field } from "@/components/field";
 import { NativeSelect } from "@/components/native-select";
 import { AddressPresetBar, PackagePresetBar } from "@/components/quote-preset-bar";
@@ -644,7 +645,6 @@ function AddressCard({
   const [zipStatus, setZipStatus] = useState<ZipFieldStatus>("idle");
   const [suburbs, setSuburbs] = useState<string[]>([]);
   const [municipality, setMunicipality] = useState<string>("");
-  const [coloniaFilter, setColoniaFilter] = useState("");
 
   useEffect(() => {
     const code = value.postalCode;
@@ -652,7 +652,6 @@ function AddressCard({
       setZipStatus("idle");
       setSuburbs([]);
       setMunicipality("");
-      setColoniaFilter("");
       return;
     }
 
@@ -683,7 +682,6 @@ function AddressCard({
         const nextSuburbs = Array.isArray(data.suburbs) ? data.suburbs : [];
         setSuburbs(nextSuburbs);
         setMunicipality(data.municipality ?? "");
-        setColoniaFilter("");
         setZipStatus("found");
         onChange((prev) =>
           prev.postalCode === code ? applyZipLookup(prev, { ...data, suburbs: nextSuburbs }) : prev,
@@ -703,10 +701,6 @@ function AddressCard({
   const zipMessage = zipFieldMessage(zipStatus, suburbs.length);
   const geoLocked = zipStatus === "found";
   const useColoniaSelect = zipStatus === "found" && suburbs.length > 0;
-  const visibleSuburbs =
-    coloniaFilter.trim().length === 0
-      ? suburbs
-      : suburbs.filter((name) => name.toLocaleLowerCase("es-MX").includes(coloniaFilter.trim().toLocaleLowerCase("es-MX")));
   const coloniaError = fieldError(errors, `${prefix}.district`);
 
   return (
@@ -771,44 +765,20 @@ function AddressCard({
             useColoniaSelect
               ? suburbs.length === 1
                 ? "Única colonia de este C.P."
-                : "Elige la colonia"
+                : "Escribe para filtrar y elige la colonia"
               : "Se llena al consultar el C.P."
           }
           error={coloniaError}
         >
-          {useColoniaSelect ? (
-            <div className="space-y-2">
-              {suburbs.length > 8 ? (
-                <Input
-                  id={`${prefix}-district-filter`}
-                  value={coloniaFilter}
-                  placeholder="Buscar colonia"
-                  aria-label={`Filtrar colonias de ${title.toLowerCase()}`}
-                  onChange={(e) => setColoniaFilter(e.target.value)}
-                />
-              ) : null}
-              <NativeSelect
-                id={`${prefix}-district`}
-                value={value.district}
-                onChange={(e) => onChange((prev) => ({ ...prev, district: e.target.value }))}
-              >
-                {suburbs.length > 1 ? <option value="">Selecciona una colonia</option> : null}
-                {(visibleSuburbs.length > 0 ? visibleSuburbs : suburbs).map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          ) : (
-            <Input
-              id={`${prefix}-district`}
-              value={value.district}
-              placeholder="Colonia"
-              disabled={zipStatus === "loading"}
-              onChange={(e) => onChange((prev) => ({ ...prev, district: e.target.value }))}
-            />
-          )}
+          <ColoniaCombobox
+            id={`${prefix}-district`}
+            value={value.district}
+            options={useColoniaSelect ? suburbs : []}
+            placeholder={useColoniaSelect ? "Escribe o elige la colonia" : "Colonia"}
+            disabled={zipStatus === "loading"}
+            ariaLabel={`Colonia de ${title.toLowerCase()}`}
+            onChange={(district) => onChange((prev) => ({ ...prev, district }))}
+          />
         </Field>
         <Field
           label="Ciudad"
