@@ -6,8 +6,8 @@ info:
     API para cotizar y comprar guías de envío doméstico en México.
     Autenticación por API key de cliente. Tarifas y envíos se expresan con `price` en MXN.
 servers:
-  - url: http://localhost:3000
-    description: Local
+  - url: __BASE_URL__
+    description: Este servidor
 paths:
   /v1/rates:
     post:
