@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { resolveBaseUrl } from "@/lib/base-url";
 import { BackLink } from "@/components/back-link";
 import { BrandMark } from "@/components/brand-mark";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function DocsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DocsPage() {
+  const baseUrl = resolveBaseUrl(await headers());
   return (
     <main className="min-h-screen bg-papel">
       <header className="bg-navy">
@@ -35,7 +40,10 @@ export default function DocsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Autenticación</CardTitle>
-            <CardDescription>El admin genera la key en Clientes.</CardDescription>
+            <CardDescription>
+              Genera, copia o regenera tu key en{" "}
+              <Link className="underline" href="/portal/api">Portal → API</Link> (con sesión de cliente) y prueba una cotización ahí mismo.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
@@ -51,8 +59,8 @@ export default function DocsPage() {
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
-              {`curl -X POST http://localhost:3000/v1/rates \\
-  -H "Authorization: Bearer $CODENVIO_API_KEY" \\
+              {`curl -X POST ${baseUrl}/v1/rates \\
+  -H "Authorization: Bearer $CODIENVIO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "origin": {
@@ -99,8 +107,8 @@ export default function DocsPage() {
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
-              {`curl -X POST http://localhost:3000/v1/shipments \\
-  -H "Authorization: Bearer $CODENVIO_API_KEY" \\
+              {`curl -X POST ${baseUrl}/v1/shipments \\
+  -H "Authorization: Bearer $CODIENVIO_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"quoteId":"...", "rateId":"..."}'`}
             </pre>
@@ -113,8 +121,8 @@ export default function DocsPage() {
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-navy p-4 text-xs text-white">
-              {`curl http://localhost:3000/v1/shipments/SHIPMENT_ID \\
-  -H "Authorization: Bearer $CODENVIO_API_KEY"`}
+              {`curl ${baseUrl}/v1/shipments/SHIPMENT_ID \\
+  -H "Authorization: Bearer $CODIENVIO_API_KEY"`}
             </pre>
           </CardContent>
         </Card>

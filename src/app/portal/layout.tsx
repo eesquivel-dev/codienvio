@@ -24,7 +24,7 @@ export default async function PortalLayout({ children }: { children: React.React
           { href: "/portal/libreta", label: "Libreta" },
           { href: "/portal/envios", label: "Mis envíos" },
           { href: "/rastreo", label: "Rastreo" },
-          { href: "/docs", label: "API" },
+          { href: "/portal/api", label: "API" },
         ]}
       />
       <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>

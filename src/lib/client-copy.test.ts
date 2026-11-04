@@ -22,7 +22,7 @@ const CLIENT_FACING_FILES = [
   "src/components/quote-preset-bar.tsx",
   "src/components/brand-mark.tsx",
   "src/lib/saved-presets.ts",
-  "public/openapi.yaml",
+  "src/openapi/openapi.yaml",
 ] as const;
 
 describe("client-facing surfaces", () => {
