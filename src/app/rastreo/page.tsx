@@ -17,7 +17,7 @@ export default async function PublicTrackingPage({
   const backHref = session?.user?.role === "ADMIN" ? "/admin" : session?.user ? "/portal" : "/";
 
   return (
-    <main className="min-h-screen bg-papel">
+    <main className="flex flex-1 flex-col bg-papel">
       <header className="bg-navy">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <BrandMark href="/" variant="on-dark" size="sm" />

@@ -92,7 +92,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="grid min-h-screen bg-papel lg:grid-cols-2">
+    <main className="grid flex-1 grid-rows-[1fr] bg-papel lg:grid-cols-2">
       <section className="relative hidden overflow-hidden bg-navy text-white lg:flex lg:flex-col lg:justify-between">
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div className="absolute -right-16 -top-16 h-72 w-72 rounded-full bg-navy-claro/45" />
@@ -122,7 +122,7 @@ export default function LoginPage() {
         </footer>
       </section>
 
-      <section className="relative flex min-h-screen flex-col bg-papel">
+      <section className="relative flex h-full flex-col bg-papel">
         <header className="flex items-center justify-between px-6 py-6 lg:hidden">
           <BrandMark />
           <p className="type-overline text-navy">{clientCopy.loginEyebrow}</p>

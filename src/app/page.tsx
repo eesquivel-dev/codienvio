@@ -13,7 +13,7 @@ export default async function HomePage() {
   const href = session?.user?.role === "ADMIN" ? "/admin" : session ? "/portal" : "/login";
 
   return (
-    <main className="min-h-screen bg-papel">
+    <main className="flex flex-1 flex-col bg-papel">
       <section className="relative overflow-hidden bg-navy text-white">
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-navy-claro/40" />

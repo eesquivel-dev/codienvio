@@ -214,6 +214,36 @@ JSON
 
 Luego `POST /v1/shipments` con `{ "quoteId", "rateId" }` y `GET /v1/shipments/:id`.
 
+## Versión y fecha de despliegue
+
+El pie de página muestra la versión, cuándo se publicó ese build y el commit corto. Aparece en la landing, el portal (`/portal`), el admin, el rastreo público y el resto de pantallas. Sirve para ver qué cambio está en línea.
+
+Ejemplo: `Versión 1.0.0 · Publicado 13/11/2026 10:20 (hora CDMX) · a1b2c3d`
+
+Los tres datos se capturan al correr `next build` (`next.config.ts` los inyecta con `env` y quedan fijos en el bundle). Un reinicio del proceso no los cambia.
+
+| Dato | Origen |
+| ---- | ------ |
+| Versión | Campo `version` de `package.json` |
+| Fecha | `BUILD_TIME` si está definido **al compilar** (ISO-8601). Si no, la hora del build. En pantalla se formatea en `America/Mexico_City`. |
+| Commit | `RENDER_GIT_COMMIT` (Render lo define solo), si no `GIT_COMMIT`, si no `git rev-parse --short HEAD` |
+
+Render no necesita configuración extra: `RENDER_GIT_COMMIT` existe durante el build. En el despliegue de AWS EC2, exporta `GIT_COMMIT` (completo o corto) antes de `npm run build`, o compila en un checkout que tenga `.git` para que valga el `git rev-parse`. `BUILD_TIME` es opcional en ambos; si no se define, vale la hora del build.
+
+`GET /api/version` responde `{ "version", "commit", "builtAt" }` con `builtAt` en ISO-8601, para comprobar el despliegue sin abrir la UI.
+
+### Cómo subir la versión
+
+Semver en `package.json`: parche para un arreglo, menor para una función nueva, mayor para un cambio incompatible. `npm version` actualiza `package.json` y `package-lock.json` sin crear tag.
+
+```bash
+npm version patch --no-git-tag-version   # 1.0.0 → 1.0.1
+npm version minor --no-git-tag-version   # 1.0.0 → 1.1.0
+npm version major --no-git-tag-version   # 1.0.0 → 2.0.0
+```
+
+Después despliega con `npm run build`. El pie y `/api/version` toman la versión nueva en ese build. No hace falta otro cambio de código.
+
 ## Scripts
 
 | Script            | Uso                          |
