@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Poppins } from "next/font/google";
+import { AppVersionFooter } from "@/components/app-version-footer";
 import { Providers } from "@/components/providers";
 import { clientCopy } from "@/lib/brand-copy";
 import "./globals.css";
@@ -28,8 +29,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-MX" className={`${poppins.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen font-sans antialiased">
-        <Providers>{children}</Providers>
+      <body className="flex min-h-screen flex-col bg-papel font-sans antialiased">
+        <Providers>
+          <div className="flex flex-1 flex-col">{children}</div>
+          <AppVersionFooter />
+        </Providers>
       </body>
     </html>
   );

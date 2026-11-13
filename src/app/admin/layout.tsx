@@ -10,13 +10,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-papel">
+    <div className="flex flex-1 flex-col bg-papel">
       <AppHeader
         name={session.user.name}
         role="ADMIN"
         items={[...ADMIN_NAV]}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8">{children}</div>
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">{children}</div>
     </div>
   );
 }

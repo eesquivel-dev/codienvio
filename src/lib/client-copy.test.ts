@@ -21,6 +21,7 @@ const CLIENT_FACING_FILES = [
   "src/components/quote-form.tsx",
   "src/components/quote-preset-bar.tsx",
   "src/components/brand-mark.tsx",
+  "src/components/app-version-footer.tsx",
   "src/lib/saved-presets.ts",
   "src/openapi/openapi.yaml",
 ] as const;
